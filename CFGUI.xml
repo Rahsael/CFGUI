@@ -794,8 +794,9 @@ if affects ~= nil then
 	for affect, _ in ipairs(affects) do
 		affects[affect][5] = (affects[affect][5] - timediff)
 	end
+	updateAffects(affects)
 end
-updateAffects(affects)
+
 end</script>
 					<triggerType>0</triggerType>
 					<conditonLineDelta>0</conditonLineDelta>
