@@ -809,7 +809,7 @@ end</script>
 					<colorTriggerFgColor>#000000</colorTriggerFgColor>
 					<colorTriggerBgColor>#000000</colorTriggerBgColor>
 					<regexCodeList>
-						<string>^\|\|(.*) (.*) (\d+)% (.*) (.*) (\d+)% (.*) (.*) (\d+)% (\d+)\:00\|\|</string>
+						<string>^\|\|(.*) (.*) (.*)% (.*) (.*) (.*)% (.*) (.*) (.*)% (\d+)\:00\|\|</string>
 					</regexCodeList>
 					<regexCodePropertyList>
 						<integer>1</integer>
