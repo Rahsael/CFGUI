@@ -1,0 +1,92 @@
+
+<html>
+<head>
+<meta charset="utf-8"/>
+<style>
+textarea { resize: none; }
+</style>
+<script>
+function chopLine(line, width) {
+  if (line.length <= width)
+    return [line, ""];
+  let regex = new RegExp("^.{1," + (width - 1) + "}\\S\\s");
+  let portion = line.match(regex);
+  if (portion)
+    return [portion[0].slice(0,-1), line.slice(portion[0].length)];
+  return [line.slice(0,width-1) + "-", line.slice(width-1)];
+}
+
+function formatMultiLineString(text, width, prefix="") {
+  text = text.replace(/^(?:queue (?:role|note|desc) \+[ ]?)?(.*\S)?[ \v]*$/mg, "$1");
+
+  text = text.replace(/[\u2018-\u2019]/g, "'");
+  text = text.replace(/[\u201C-\u201D]/g, "\"");
+  text = text.replace(/[\u2010-\u2015]/g, "-");
+  text = text.replace(/\u2022/g, "*");
+  text = text.replace(/\u2026/g, "...");
+
+  text = text.replace(/^\n+/, "");
+  text = text.replace(/\n+$/, "");
+
+  let lines = text.split("\n");
+
+  let chopped = [];
+  let carried = "";
+  let portion = "";
+
+  for (let i = 0; i < lines.length; i++) {
+    if (carried) {
+      if (lines[i].match(/^[A-Za-z]/)) {
+        [lines[i], carried] = chopLine(carried + " " + lines[i], width);
+        chopped.push(lines[i]);
+      } else {
+        while (carried) {
+          [portion, carried] = chopLine(carried, width);
+          chopped.push(portion);
+        }
+        chopped.push(lines[i]);
+      }  
+    } else {
+      [lines[i], carried] = chopLine(lines[i], width);
+      chopped.push(lines[i]);
+    }
+  }
+  while (carried) {
+    [portion, carried] = chopLine(carried, width);
+    chopped.push(portion);
+  }
+  return chopped.map(line => prefix + line + "\n").join("");
+}
+
+function formatTextArea(elementId, width, prefix="") {
+  let textarea = document.getElementById(elementId);
+  textarea.value = formatMultiLineString(textarea.value, width, prefix)
+}
+  
+function copyTextArea() {
+	var copyText = document.getElementById("myTextArea");
+	copyText.select();
+	copyText.setSelectionRange(0, 99999);
+	document.execCommand("copy");
+	alert("Text copied.");
+}
+
+</script>
+</head>
+<body style = "background-color:black;">
+<center><h1 style = "color:#ffe78f;">Carrion Fields Text Formatter</h1>
+<center><h3 style = "color:white;">Mudlet skin edition</h3>
+<p style = "color:silver;"> Paste your text into the box below and click the appropriate button to format your text.<br>
+The result can be pasted directly into the Mudlet command prompt and entered into a queue.<br>
+For help, type "guihelp queue".</p>
+<p>
+<input type="button" style = "font-size: 16; color: #ffe78f; padding: 14px 40px; background-color: maroon; border: 1px solid #ffe78f; border-radius: 5px;" value="Format Role" onclick="formatTextArea('myTextArea', 78, 'queue role + ');" />
+<input type="button" style = "font-size: 16; color: #ffe78f; padding: 14px 40px; background-color: purple; border: 1px solid #ffe78f; border-radius: 5px;" value="Format Desc" onclick="formatTextArea('myTextArea', 76, 'queue desc + ');" />
+<input type="button" style = "font-size: 16; color: #ffe78f; padding: 14px 40px; background-color: #255356; border: 1px solid #ffe78f; border-radius: 5px;" value="Format Note" onclick="formatTextArea('myTextArea', 78, 'queue note + ');" />
+<input type="button" style = "font-size: 16; color: #ffe78f; padding: 14px 40px; background-color: navy; border: 1px solid #ffe78f; border-radius: 5px;" value="Copy" onclick="copyTextArea()"/>
+</p>
+</center>
+<center><textarea id="myTextArea" cols="115" rows="25" style="background-color: #192648; color: #c9c9c9; border: 1px solid silver; border-radius:5px;"></textarea></center>
+<center><p style = "color:silver">Coded by Nalasul for Carrion Fields, 2020</p>
+</body>
+</html>
