@@ -1,0 +1,8 @@
+1.3.1-f
+1.11
+
+<white>Updates include:<reset>
+<OrangeRed>-<reset> New auto-updater
+<OrangeRed>-<reset> The CF_Loader package is no longer necessary and will be uninstalled.
+<OrangeRed>-<reset> Rejoice! The Item Journal is fixed
+<OrangeRed>-<reset> Assorted bug fixes
