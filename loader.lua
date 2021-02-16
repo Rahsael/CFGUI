@@ -16,3 +16,11 @@ function installReady(event, file)
   end
 end
 registerAnonymousEventHandler("sysDownloadDone", "installReady")
+
+function installComplete(_, package)
+  if package == "CFGUI" then
+    cecho("<OrangeRed>Installation complete!\n\n")
+    cecho("<gold>After logging in, you may need to use the <white>setprompt<gold> command. See <white>guihelp<gold> for more information.\n\n")
+  end
+end
+registerAnonymousEventHandler("sysInstall", "installComplete")
