@@ -256,14 +256,14 @@ For more details, enter the command by itself.
   )
   helpLinks()
   
-elseif helpselect == '0' then
+  elseif helpselect == '0' then
   cecho(
     [[
 <white>Troubleshooting<gray>
   
 <gray>Many issues with the GUI can be fixed by entering SCORE or AFF in-game. On rare occasions, you may need to use the setprompt command again. If something seems hopelessly broken, try restarting Mudlet. If that fails, try creating a new profile and reloading this package. If you have further questions, comments or suggestions, please email rahsael@carrionfields.com and I'll do my best to help you out. If you're having trouble with an alias or some other type of customization, and copying/modifying an existing one isn't cutting it, check out Mudlet's wiki and forums - they do a great job and the community there is extremely supportive.
 	
-]]
+]])
   else
     cecho(
     [[
@@ -291,7 +291,7 @@ Enter: <white>guihelp <number><reset> to learn about a feature.
   
 <white>To get started quick:<gray> Type <white>alias<gray> to create aliases, <white>var<gray> to create variables.
 
-]]
+]])
 
   end
 end
