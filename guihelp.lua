@@ -269,7 +269,8 @@ For more details, enter the command by itself.
   else
     cecho(
     [[
-Enter: <white>guihelp <number><reset> to learn about a feature.
+<reset>Enter <white>guihelp <number><reset> to learn about a feature.
+			
     <dodger_blue>1<reset> - Variables
     <dodger_blue>2<reset> - Highlights
     <dodger_blue>3<reset> - Aliases
@@ -288,8 +289,6 @@ Enter: <white>guihelp <number><reset> to learn about a feature.
     <dodger_blue>12<reset> - Useful Utility Commands - <OrangeRed>A Must-Read!
     
     <dodger_blue>0<reset> - Troubleshooting
-  
-<white>Note:<gray> <OrangeRed>*<white>Right-click<OrangeRed>*<gray> the top area in any of the windows or elements on this screen, and you can unlock them, move them, or even close them. If you mess up, <white>guireset<gray> will revert to your previous state. Use <white>guisave<gray> to save the layout once you're satisfied. If you accidentally closed a window, use 'guirestore'.
   
 <white>To get started quick:<gray> Type <white>alias<gray> to create aliases, <white>var<gray> to create variables.
 
