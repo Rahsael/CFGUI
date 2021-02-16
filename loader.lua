@@ -1,4 +1,5 @@
 function downloadPkg()
+  -- Updated 2/15/2021
   if exists("CFGUI", "script") > 0 then
     return
   else
