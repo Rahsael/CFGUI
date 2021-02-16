@@ -103,7 +103,8 @@ elseif helpselect == '5' then
     [[
 <white>Gauges and the 'Setprompt' Command<gray>
   
-Syntax: <white>setprompt<gray> (shows all options)
+Syntax: <white>setprompt<gray>
+	<white>setprompt <arguments>
 
 <gray>The gauges on the bottom console show your health, mana, movement and experience to next level based on the percentage of each. They gather those numbers from your prompt, from level-up messages, and from the SCORE command, when you use it.
 
