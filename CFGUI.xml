@@ -286,7 +286,6 @@ latency = {}
 latency[1] = getNetworkLatency()
 disableTrigger("TelnetGA Watch")
 enableScript("latencyCompare")
-
 enableTrigger("Prompt Updater")</script>
 					<triggerType>0</triggerType>
 					<conditonLineDelta>0</conditonLineDelta>
@@ -637,7 +636,7 @@ appendBuffer("allConsole")</script>
 						</regexCodePropertyList>
 					</Trigger>
 				</TriggerGroup>
-				<TriggerGroup isActive="yes" isFolder="yes" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+				<TriggerGroup isActive="no" isFolder="yes" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
 					<name>Familiar Window</name>
 					<script></script>
 					<triggerType>0</triggerType>
@@ -676,7 +675,7 @@ deleteLine()</script>
 					</Trigger>
 				</TriggerGroup>
 				<TriggerGroup isActive="yes" isFolder="yes" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-					<name>Gear Capture</name>
+					<name>Inventory and Equipment Capture</name>
 					<script></script>
 					<triggerType>0</triggerType>
 					<conditonLineDelta>0</conditonLineDelta>
@@ -714,9 +713,11 @@ enableTrigger("equipment_end")</script>
 						<regexCodePropertyList>
 							<integer>1</integer>
 						</regexCodePropertyList>
-						<Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+						<Trigger isActive="no" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
 							<name>equipment_end</name>
-							<script>disableTrigger("equipment_begin")
+							<script>updateGear()
+
+disableTrigger("equipment_begin")
 disableTrigger("equipment_end")</script>
 							<triggerType>0</triggerType>
 							<conditonLineDelta>0</conditonLineDelta>
@@ -735,7 +736,7 @@ disableTrigger("equipment_end")</script>
 								<integer>1</integer>
 							</regexCodePropertyList>
 						</Trigger>
-						<Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+						<Trigger isActive="no" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
 							<name>equipment_begin</name>
 							<script>local wear_location = matches[2]
 local item_name = matches[3]
@@ -773,8 +774,6 @@ end
 
 equipment[wear_location] = {name = item_name, number = equipment_count}
 
-EquipmentConsole:cecho("&lt;steel_blue&gt;"..wear_location..":&lt;reset&gt; ")
-EquipmentConsole:decho(copy2decho(item_name).."\n")
 setTriggerStayOpen("Equipment Capture", 1)
 setTriggerStayOpen("equipment_begin", 1)</script>
 							<triggerType>0</triggerType>
@@ -806,6 +805,7 @@ setTriggerStayOpen("equipment_begin", 1)</script>
 					<Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
 						<name>Inventory Capture</name>
 						<script>clearWindow("InventoryConsole")
+inventory = {}
 InventoryConsole:echo("\n")
 enableTrigger("inventory_begin")
 enableTrigger("inventory_count_begin")
@@ -827,8 +827,106 @@ enableTrigger("inventory_end")</script>
 							<integer>1</integer>
 						</regexCodePropertyList>
 						<Trigger isActive="no" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+							<name>inventory_begin</name>
+							<script>--This trigger only captures single items.
+local invItem = matches[2]
+local invFlags = {}
+local invTag = ""
+--For single items
+local invCount = 1
+
+if invItem:match("%(%w+") then
+  invItem = invItem:gsub("%(","")
+  invFlags = invItem:split(") ")
+  invItem = invFlags[#invFlags]
+  invFlags[#invFlags] = nil
+end
+
+for index, _ in ipairs(id_table) do
+  if invItem == id_table[index]["name"] then
+--  if string.match(id_table[index]["name"]:gsub("-", ""), item_name:gsub("-", "")) then
+    if id_table[index]["tag"] ~= nil and id_table[index]["tag"] ~= "" and id_table[index]["tag_color"] ~= nil and id_table[index]["tag_color"] ~= "" and id_table[index]["tag_trigger"] ~= nil and id_table[index]["tag_trigger"] ~= "" then
+      invTag = " &lt;white&gt;[ &lt;" .. id_table[index]["tag_color"].."&gt;"..id_table[index]["tag"].." &lt;white&gt;]"
+    end
+  end
+end
+
+if inventory[1] == nil then
+  inventory[1] = {name = invItem, count = invCount, flags = invFlags, tag = invTag}
+elseif invItem ~= "" then
+  inventory[#inventory+1] = {name = invItem, count = invCount, flags = invFlags, tag = invTag}
+else
+end
+
+setTriggerStayOpen("Inventory Capture", 1)</script>
+							<triggerType>0</triggerType>
+							<conditonLineDelta>0</conditonLineDelta>
+							<mStayOpen>0</mStayOpen>
+							<mCommand></mCommand>
+							<packageName></packageName>
+							<mFgColor>#ff0000</mFgColor>
+							<mBgColor>#ffff00</mBgColor>
+							<mSoundFile></mSoundFile>
+							<colorTriggerFgColor>#000000</colorTriggerFgColor>
+							<colorTriggerBgColor>#000000</colorTriggerBgColor>
+							<regexCodeList>
+								<string>^\s+(.*)$</string>
+							</regexCodeList>
+							<regexCodePropertyList>
+								<integer>1</integer>
+							</regexCodePropertyList>
+						</Trigger>
+						<Trigger isActive="no" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+							<name>inventory_count_begin</name>
+							<script>-- This trigger only captures (2)+ items
+local invCount = matches[2]
+local invItem = matches[3]
+local invFlags = {}
+
+--Clean up and separate the flags into a table without parentheses
+if invItem:match("%(%w+") then
+  invItem = invItem:gsub("%(","")
+  invFlags = invItem:split(") ")
+  invItem = invFlags[#invFlags]
+  invFlags[#invFlags] = nil
+end
+
+for index, _ in ipairs(id_table) do
+  if invItem == id_table[index]["name"] then
+    if id_table[index]["tag"] ~= nil and id_table[index]["tag"] ~= "" and id_table[index]["tag_color"] ~= nil and id_table[index]["tag_color"] ~= "" and id_table[index]["tag_trigger"] ~= nil and id_table[index]["tag_trigger"] ~= "" then
+      invTag = " &lt;white&gt;[ &lt;" .. id_table[index]["tag_color"].."&gt;"..id_table[index]["tag"].." &lt;white&gt;]"
+    end
+  end
+end
+
+if inventory[1] == nil then
+  inventory[1] = {name = invItem, count = invCount, flags = invFlags, tag = invTag}
+else
+  inventory[#inventory+1] = {name = invItem, count = invCount, flags = invFlags, tag = invTag}
+end
+
+setTriggerStayOpen("Inventory Capture", 1)</script>
+							<triggerType>0</triggerType>
+							<conditonLineDelta>0</conditonLineDelta>
+							<mStayOpen>0</mStayOpen>
+							<mCommand></mCommand>
+							<packageName></packageName>
+							<mFgColor>#ff0000</mFgColor>
+							<mBgColor>#ffff00</mBgColor>
+							<mSoundFile></mSoundFile>
+							<colorTriggerFgColor>#000000</colorTriggerFgColor>
+							<colorTriggerBgColor>#000000</colorTriggerBgColor>
+							<regexCodeList>
+								<string>^\(\s*(\d+)\) (.*)$</string>
+							</regexCodeList>
+							<regexCodePropertyList>
+								<integer>1</integer>
+							</regexCodePropertyList>
+						</Trigger>
+						<Trigger isActive="no" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
 							<name>inventory_end</name>
-							<script>disableTrigger("inventory_count_begin")
+							<script>updateInventory()
+disableTrigger("inventory_count_begin")
 disableTrigger("inventory_begin")
 disableTrigger("inventory_end")</script>
 							<triggerType>0</triggerType>
@@ -843,52 +941,6 @@ disableTrigger("inventory_end")</script>
 							<colorTriggerBgColor>#000000</colorTriggerBgColor>
 							<regexCodeList>
 								<string>^$</string>
-							</regexCodeList>
-							<regexCodePropertyList>
-								<integer>1</integer>
-							</regexCodePropertyList>
-						</Trigger>
-						<Trigger isActive="no" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-							<name>inventory_count_begin</name>
-							<script>local invCount = matches[2]
-local invItem = matches[3]
---InventoryConsole:cecho("&lt;steel_blue&gt;"..invCount.." &lt;gray&gt;"..invItem.."\n")
-setTriggerStayOpen("Inventory Capture", 1)</script>
-							<triggerType>0</triggerType>
-							<conditonLineDelta>0</conditonLineDelta>
-							<mStayOpen>0</mStayOpen>
-							<mCommand></mCommand>
-							<packageName></packageName>
-							<mFgColor>#ff0000</mFgColor>
-							<mBgColor>#ffff00</mBgColor>
-							<mSoundFile></mSoundFile>
-							<colorTriggerFgColor>#000000</colorTriggerFgColor>
-							<colorTriggerBgColor>#000000</colorTriggerBgColor>
-							<regexCodeList>
-								<string>^(\(\s*\d+\)) (.*)$</string>
-							</regexCodeList>
-							<regexCodePropertyList>
-								<integer>1</integer>
-							</regexCodePropertyList>
-						</Trigger>
-						<Trigger isActive="no" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-							<name>inventory_begin</name>
-							<script>local invItem = matches[2]
---InventoryConsole:cecho("&lt;gray&gt;"..invItem.."\n")
-setTriggerStayOpen("Inventory Capture", 1)
-InventoryConsole:decho(copy2decho(invItem).."\n")</script>
-							<triggerType>0</triggerType>
-							<conditonLineDelta>0</conditonLineDelta>
-							<mStayOpen>0</mStayOpen>
-							<mCommand></mCommand>
-							<packageName></packageName>
-							<mFgColor>#ff0000</mFgColor>
-							<mBgColor>#ffff00</mBgColor>
-							<mSoundFile></mSoundFile>
-							<colorTriggerFgColor>#000000</colorTriggerFgColor>
-							<colorTriggerBgColor>#000000</colorTriggerBgColor>
-							<regexCodeList>
-								<string>^\s+(.*)$</string>
 							</regexCodeList>
 							<regexCodePropertyList>
 								<integer>1</integer>
@@ -913,11 +965,11 @@ InventoryConsole:decho(copy2decho(invItem).."\n")</script>
 					<regexCodePropertyList />
 					<Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
 						<name>Invisible Prompt Capture</name>
-						<script>-- Updated 12/30/20
--- Current working capture trigger: ^\&lt;(-?\d+)%?\/(-?\d+)%?\((-?\d+)%?\)h (-?\d+)%?\/(-?\d+)%?\((-?\d+)%?\)m (-?\d+)%?\/(-?\d+)%?\((-?\d+)%\)?v (\d+)\|(-?\d+).(\d+)% ((?:PROTECTED)?\s*(?:water|wilderness|civilized|air)(?: subterranean|arena)?\s*(?:hills|HILLS|mountain|MOUNTAIN|forest(?: trail)?|FOREST(?: TRAIL)?|swamp|SWAMP|field|FIELD|plains|PLAINS|desert|DESERT|cave|CAVE|graveyard)?) (\w+) (\w+) (\w+) (\d+ (?:AM|PM))\|(\d+):00 (\d+):(\d+):\d+ (\w+) (\w+) (\w+|\?\?) (\d+)\|(\d+)\&gt;\s*
+						<script>-- Updated 1/25/21
+-- Current working capture trigger: ^\&lt;(-?\d+)%?\/(-?\d+)%?\((-?\d+)%?\)h (-?\d+)%?\/(-?\d+)%?\((-?\d+)%?\)m (-?\d+)%?\/(-?\d+)%?\((-?\d+)%\)?v (\d+)\|(-?\d+).(\d+)% ((?:PROTECTED)?\s*(?:water|WATER|wilderness|civilized|air)(?: subterranean|arena)?\s*(?:water|WATER|hills|HILLS|mountain|MOUNTAIN|forest(?: trail)?|FOREST(?: TRAIL)?|jungle|JUNGLE|swamp|SWAMP|field|FIELD|plains|PLAINS|desert|DESERT|cave|CAVE|graveyard)?) (\w+) (\w+) (\w+) (\d+ (?:AM|PM))\|(\d+):00 (\d+):(\d+):\d+ (\w+(?: \(mounted\))?) (\w+) (\w+|\?\?) (\d+)\|(\d+)\&gt;\s*
 -- Current working full prompt: &lt;%h/%H(%e)h %m/%M(%f)m %v/%V(%g)v %X|%P %W %I %w %n %T|%E %t %p %d %o %a|%A&gt;
 --
--- Related scripts: Prompts, Time
+-- Related/interdependent scripts: Prompts, Time
 --
 raiseEvent("cfPrompt", true)
 deleteLine()
@@ -948,10 +1000,38 @@ drunk = matches[23]
 repertoire = matches[24]
 age = matches[25]
 char_hours = matches[26]
-
 echoPrompt()
--- Functions from "Time" Script
-checkTime(time, time_old)
+if not time then
+  time_old = time
+else
+  local firsttime = true
+  displayTime()
+end
+if firsttime == true and time_old == nil then
+  time_old = time
+  firsttime = false
+end
+if time_old ~= nil and time ~= time_old then
+  --echo("Time has changed.")
+  if time &lt; time_old then
+    -- formula for calculating time difference across midnight
+    timediff = ((time - time_old) + 24)
+  else
+    timediff = time - time_old
+  end
+  if affects ~= nil then
+    for affect, _ in ipairs(affects) do
+      if tonumber(affects[affect][5]) then
+        affects[affect][5] = (affects[affect][5] - timediff)
+      end
+    end
+  end
+end
+-- Function from "Affects" Script
+updateAffects(affects)
+-- Function from "Terrain" Script
+terrainUpdate()
+-- Function from "Time" Script
 displayTime()
 -- Function from "Prompts" Script
 updateGauges()</script>
@@ -966,7 +1046,7 @@ updateGauges()</script>
 						<colorTriggerFgColor>#000000</colorTriggerFgColor>
 						<colorTriggerBgColor>#000000</colorTriggerBgColor>
 						<regexCodeList>
-							<string>^\&lt;(-?\d+)%?\/(-?\d+)%?\((-?\d+)%?\)h (-?\d+)%?\/(-?\d+)%?\((-?\d+)%?\)m (-?\d+)%?\/(-?\d+)%?\((-?\d+)%\)?v (\d+)\|(-?\d+).(\d+)% ((?:PROTECTED)?\s*(?:water|wilderness|civilized|air)(?: subterranean|arena)?\s*(?:hills|HILLS|mountain|MOUNTAIN|forest(?: trail)?|FOREST(?: TRAIL)?|swamp|SWAMP|field|FIELD|plains|PLAINS|desert|DESERT|cave|CAVE|graveyard)?) (\w+) (\w+) (\w+) (\d+ (?:AM|PM))\|(\d+):00 (\d+):(\d+):\d+ (\w+) (\w+) (\w+|\?\?) (\d+)\|(\d+)\&gt;\s*</string>
+							<string>^\&lt;(-?\d+)%?\/(-?\d+)%?\((-?\d+)%?\)h (-?\d+)%?\/(-?\d+)%?\((-?\d+)%?\)m (-?\d+)%?\/(-?\d+)%?\((-?\d+)%\)?v (\d+)\|(-?\d+).(\d+)% ((?:PROTECTED)?\s*(?:water|WATER|wilderness|civilized|air)(?: subterranean|arena)?\s*(?:water|WATER|hills|HILLS|mountain|MOUNTAIN|forest(?: trail)?|FOREST(?: TRAIL)?|jungle|JUNGLE|swamp|SWAMP|field|FIELD|plains|PLAINS|desert|DESERT|cave|CAVE|graveyard)?) (\w+) (\w+) (\w+) (\d+ (?:AM|PM))\|(\d+):00 (\d+):(\d+):\d+ (\w+(?: \(mounted\))?) (\w+) (\w+|\?\?) (\d+)\|(\d+)\&gt;\s*</string>
 						</regexCodeList>
 						<regexCodePropertyList>
 							<integer>1</integer>
@@ -1724,32 +1804,41 @@ end</script>
 					<Trigger isActive="no" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
 						<name>ID_end</name>
 						<script>disableTrigger("ID_capture")
-disableTrigger("alduk_capture_grab")
-disableTrigger("Keyword_cap")
-
+--disableTrigger("alduk_capture_grab")
+--disableTrigger("Keyword_cap")
 local id_data = {}
-
 if string.match(id_capture, "Alduk tells you") then
   id_capture = string.gsub(id_capture, "Alduk tells you '", "")
   id_capture = string.gsub(id_capture, "Alduk gives you .+\.", "")
 end
-
 id_data = {name = item_name, keyword = item_keyword, id = id_capture}
-
-for index,_ in ipairs(id_table) do
+for index, _ in ipairs(id_table) do
   --POSSIBLE ISSUES WITH DIFF OUTPUTS FROM LORE AND ALDUK: if id_data["id"] == id_table[index]["id"] then
-  if id_data["name"] == id_table[index]["name"]
-  and id_data["keyword"] == id_table[index]["keyword"] then
+  if id_data["name"] == id_table[index]["name"] and id_data["keyword"] == id_table[index]["keyword"] then
     disableTrigger("ID_end")
-    return cecho("\n&lt;DimGray&gt;This item is already in your journal.\n\n")
+    --Loading the ID data into id_replace temp table
+    id_replace["id"] = id_data["id"]    
+    id_replace["keyword"] = id_data["keyword"]
+    id_replace["name"] = id_data["name"]
+    id_replace["page"] = index
+    return cecho("\n&lt;LightGoldenrod&gt;This item is already on page &lt;DarkGoldenrod&gt;[&lt;white&gt;".. index.. "&lt;DarkGoldenrod&gt;]&lt;LightGoldenrod&gt; of your journal.\nTo replace your current entry with this identification, use &lt;white&gt;journal replace&lt;LightGoldenrod&gt; now.\n")
+  elseif id_data["name"] == id_table[index]["name"] and (id_table[index]["keyword"] == nil or id_table[index]["keyword"] == "" or id_table[index]["id"] == nil or id_table[index]["id"] == "") then
+    id_table[index]["id"] = id_data["id"]
+    id_table[index]["keyword"] = id_data["keyword"]
+    id_table[index]["name"] = id_data["name"]    
+    table.save(PkgPath .. "id_table.lua", id_table)
+    cecho("\n&lt;LightGoldenrod&gt;Your item journal entry on page &lt;DarkGoldenrod&gt;[&lt;white&gt;".. index.. "&lt;DarkGoldenrod&gt;]&lt;LightGoldenrod&gt; has been updated.\n\n")
+    disableTrigger("ID_end")
+    return
   end
 end
-
-cecho("\n&lt;orchid&gt;"..string.title(item_name).."&lt;PaleGoldenrod&gt; has been added to your item journal.\n")
-
+cecho(
+  "\n&lt;orchid&gt;" ..
+  string.title(item_name) ..
+  "&lt;PaleGoldenrod&gt; has been added to your item journal.\n"
+)
 table.insert(id_table, id_data)
-table.save(getMudletHomeDir() .. "/id_table.lua", id_table)
-
+table.save(PkgPath .. "id_table.lua", id_table)
 disableTrigger("ID_end")</script>
 						<triggerType>0</triggerType>
 						<conditonLineDelta>0</conditonLineDelta>
@@ -1764,8 +1853,10 @@ disableTrigger("ID_end")</script>
 						<regexCodeList>
 							<string>^Alduk gives you (?:.*)$</string>
 							<string>^-------------------------------------------------------------------------------</string>
+							<string>^$</string>
 						</regexCodeList>
 						<regexCodePropertyList>
+							<integer>1</integer>
 							<integer>1</integer>
 							<integer>1</integer>
 						</regexCodePropertyList>
@@ -1797,28 +1888,7 @@ id_capture = ""
 							<integer>1</integer>
 						</regexCodePropertyList>
 					</Trigger>
-					<Trigger isActive="no" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-						<name>alduk_capture_close</name>
-						<script>
-cecho("\n&lt;steel_blue&gt;Added to your item journal.")</script>
-						<triggerType>0</triggerType>
-						<conditonLineDelta>0</conditonLineDelta>
-						<mStayOpen>0</mStayOpen>
-						<mCommand></mCommand>
-						<packageName></packageName>
-						<mFgColor>#ff0000</mFgColor>
-						<mBgColor>#ffff00</mBgColor>
-						<mSoundFile></mSoundFile>
-						<colorTriggerFgColor>#000000</colorTriggerFgColor>
-						<colorTriggerBgColor>#000000</colorTriggerBgColor>
-						<regexCodeList>
-							<string>^Alduk gives you (?:.*)$</string>
-						</regexCodeList>
-						<regexCodePropertyList>
-							<integer>1</integer>
-						</regexCodePropertyList>
-					</Trigger>
-					<Trigger isActive="no" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+					<Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
 						<name>Keyword_cap</name>
 						<script>item_keyword = matches[2]</script>
 						<triggerType>0</triggerType>
@@ -1870,7 +1940,7 @@ enableTrigger("DescCap_begin")</script>
 						<colorTriggerFgColor>#ffffff</colorTriggerFgColor>
 						<colorTriggerBgColor>#000000</colorTriggerBgColor>
 						<regexCodeList>
-							<string>ANSI_COLORS_F{015}_B{IGNORE}</string>
+							<string>FG15BG-2</string>
 							<string>^  .*$</string>
 						</regexCodeList>
 						<regexCodePropertyList>
@@ -1894,7 +1964,7 @@ enableTrigger("DescCap_begin")</script>
 						<colorTriggerFgColor>#00ffff</colorTriggerFgColor>
 						<colorTriggerBgColor>#000000</colorTriggerBgColor>
 						<regexCodeList>
-							<string>ANSI_COLORS_F{014}_B{IGNORE}</string>
+							<string>FG13BG-2</string>
 							<string>^  .*$</string>
 						</regexCodeList>
 						<regexCodePropertyList>
@@ -1918,7 +1988,7 @@ enableTrigger("DescCap_begin")</script>
 						<colorTriggerFgColor>#00ff00</colorTriggerFgColor>
 						<colorTriggerBgColor>#000000</colorTriggerBgColor>
 						<regexCodeList>
-							<string>ANSI_COLORS_F{010}_B{IGNORE}</string>
+							<string>FG5BG-2</string>
 							<string>^  .*$</string>
 						</regexCodeList>
 						<regexCodePropertyList>
@@ -2064,104 +2134,97 @@ resetFormat()</script>
 						</regexCodePropertyList>
 					</Trigger>
 				</TriggerGroup>
-			</TriggerGroup>
-			<Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-				<name>Group Capture</name>
-				<script>groupmate_name = matches[2]
+				<Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+					<name>Group Capture</name>
+					<script>groupmate_name = matches[2]
 groupmate_health = tonumber(matches[3])
 groupmate_mana = tonumber(matches[4])
 groupmate_moves = tonumber(matches[5])
-
 if groupmate_health == 100 then
-	selectString(groupmate_health,1)
-	fg("azure")
-	deselect()
-	selectString(groupmate_name,1)
-	fg("azure")
-	deselect()
-	resetFormat()
-elseif groupmate_health &lt; 100
-and groupmate_health &gt; 89 then
-	selectString(groupmate_health,1)
-	fg("PaleTurquoise")
-	deselect()
-	selectString(groupmate_name,1)
-	fg("PaleTurquoise")
-	deselect()
-	resetFormat()
-elseif groupmate_health &lt; 90
-and groupmate_health &gt; 79 then
-	selectString(groupmate_health,1)
-	fg("aquamarine")
-	deselect()
-	selectString(groupmate_name,1)
-	fg("aquamarine")
-	deselect()
-	resetFormat()
-elseif groupmate_health &lt; 80
-and groupmate_health &gt; 60 then
-	selectString(groupmate_health,1)
-	fg("PaleGreen")
-	deselect()
-	selectString(groupmate_name,1)
-	fg("PaleGreen")
-	deselect()
-	resetFormat()
-elseif groupmate_health &lt; 61
-and groupmate_health &gt; 49 then
-	selectString(groupmate_health,1)
-	fg("chartreuse")
-	deselect()
-	selectString(groupmate_name,1)
-	fg("chartreuse")
-	deselect()
-	resetFormat()
-elseif groupmate_health &lt; 50
-and groupmate_health &gt; 39 then
-	selectString(groupmate_health,1)
-	fg("GreenYellow")
-	deselect()
-	selectString(groupmate_name,1)
-	fg("GreenYellow")
-	deselect()
-	resetFormat()
-elseif groupmate_health &lt; 40
-and groupmate_health &gt; 20 then
-	selectString(groupmate_health,1)
-	fg("yellow")
-	deselect()
-	selectString(groupmate_name,1)
-	fg("yellow")
-	deselect()
-	resetFormat()
+  selectString(groupmate_health, 1)
+  fg("azure")
+  deselect()
+  selectString(groupmate_name, 1)
+  fg("azure")
+  deselect()
+  resetFormat()
+elseif groupmate_health &lt; 100 and groupmate_health &gt; 89 then
+  selectString(groupmate_health, 1)
+  fg("PaleTurquoise")
+  deselect()
+  selectString(groupmate_name, 1)
+  fg("PaleTurquoise")
+  deselect()
+  resetFormat()
+elseif groupmate_health &lt; 90 and groupmate_health &gt; 79 then
+  selectString(groupmate_health, 1)
+  fg("aquamarine")
+  deselect()
+  selectString(groupmate_name, 1)
+  fg("aquamarine")
+  deselect()
+  resetFormat()
+elseif groupmate_health &lt; 80 and groupmate_health &gt; 60 then
+  selectString(groupmate_health, 1)
+  fg("PaleGreen")
+  deselect()
+  selectString(groupmate_name, 1)
+  fg("PaleGreen")
+  deselect()
+  resetFormat()
+elseif groupmate_health &lt; 61 and groupmate_health &gt; 49 then
+  selectString(groupmate_health, 1)
+  fg("chartreuse")
+  deselect()
+  selectString(groupmate_name, 1)
+  fg("chartreuse")
+  deselect()
+  resetFormat()
+elseif groupmate_health &lt; 50 and groupmate_health &gt; 39 then
+  selectString(groupmate_health, 1)
+  fg("GreenYellow")
+  deselect()
+  selectString(groupmate_name, 1)
+  fg("GreenYellow")
+  deselect()
+  resetFormat()
+elseif groupmate_health &lt; 40 and groupmate_health &gt; 20 then
+  selectString(groupmate_health, 1)
+  fg("yellow")
+  deselect()
+  selectString(groupmate_name, 1)
+  fg("yellow")
+  deselect()
+  resetFormat()
 elseif groupmate_health &lt; 21 then
-	selectString(groupmate_health,1)
-	fg("red")
-	deselect()
-	selectString(groupmate_name,1)
-	fg("red")
-	deselect()
-	resetFormat()
+  selectString(groupmate_health, 1)
+  fg("red")
+  deselect()
+  selectString(groupmate_name, 1)
+  fg("red")
+  deselect()
+  resetFormat()
 end</script>
-				<triggerType>0</triggerType>
-				<conditonLineDelta>0</conditonLineDelta>
-				<mStayOpen>0</mStayOpen>
-				<mCommand></mCommand>
-				<packageName></packageName>
-				<mFgColor>#ff0000</mFgColor>
-				<mBgColor>#ffff00</mBgColor>
-				<mSoundFile></mSoundFile>
-				<colorTriggerFgColor>#000000</colorTriggerFgColor>
-				<colorTriggerBgColor>#000000</colorTriggerBgColor>
-				<regexCodeList>
-					<string>^\[\s*\d+\s*\w{3}\]\s*(\w+)\s*(\d+)%\s*hp\s*(\d+)%\s*mana\s*(\d+)%\s*mv\s*(\d+)\s*xp$</string>
-					<string>^\[\s*NPC\s*\]\s*(.*)\s+ (\d+)%\s*hp\s*(\d+)%\s*mana\s*(\d+)%\s*mv\s*(\d+)\s*xp$</string>
-				</regexCodeList>
-				<regexCodePropertyList>
-					<integer>1</integer>
-					<integer>1</integer>
-				</regexCodePropertyList>
-			</Trigger>
+					<triggerType>0</triggerType>
+					<conditonLineDelta>0</conditonLineDelta>
+					<mStayOpen>0</mStayOpen>
+					<mCommand></mCommand>
+					<packageName></packageName>
+					<mFgColor>#ff0000</mFgColor>
+					<mBgColor>#ffff00</mBgColor>
+					<mSoundFile></mSoundFile>
+					<colorTriggerFgColor>#000000</colorTriggerFgColor>
+					<colorTriggerBgColor>#000000</colorTriggerBgColor>
+					<regexCodeList>
+						<string>^\[\s*\d+\s*\w{3}\]\s*(\w+)\s*(\d+)%\s*hp\s*(\d+)%\s*mana\s*(\d+)%\s*mv\s*(\d+)\s*xp$</string>
+						<string>^\[\s*NPC\s*\]\s*(.*)\s+ (\d+)%\s*hp\s*(\d+)%\s*mana\s*(\d+)%\s*mv\s*(\d+)\s*xp$</string>
+					</regexCodeList>
+					<regexCodePropertyList>
+						<integer>1</integer>
+						<integer>1</integer>
+					</regexCodePropertyList>
+				</Trigger>
+			</TriggerGroup>
 		</TriggerGroup>
 	</TriggerPackage>
 	<TimerPackage>
@@ -2195,11 +2258,11 @@ Logger:_checkFileSize(Logger.logging_file, Logger.splitSize)</script>
 				</TimerGroup>
 			</TimerGroup>
 			<Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
-				<name>CalendarUpdate</name>
-				<script>getCalendar()</script>
+				<name>Item Journal Backup</name>
+				<script>backupJournal()</script>
 				<command></command>
 				<packageName></packageName>
-				<time>00:15:00.000</time>
+				<time>00:30:00.000</time>
 			</Timer>
 		</TimerGroup>
 	</TimerPackage>
@@ -2619,272 +2682,7 @@ table.save(PkgPath.."vt.lua", vt)
 				</Alias>
 				<Alias isActive="yes" isFolder="no">
 					<name>GUI Help</name>
-					<script>helpselect = matches[2]
-if helpselect == '1' or helpselect == 'variables' then
-  cecho(
-    [[
-&lt;white&gt;Variables&lt;gray&gt;
-
-Syntax: &lt;white&gt;var &lt;steel_blue&gt;&lt;variable name&gt; &lt;value&gt; &lt;gray&gt;
-        &lt;white&gt;var&lt;gray&gt; to see and manage existing variables
-
-&lt;PaleGoldenrod&gt;Variables &lt;gray&gt;are special words that can be set to stand for another for use in &lt;PaleGoldenrod&gt;aliases &lt;gray&gt;(which are detailed in guihelp 2).  For example, you might set the variable @food to 'chicken', or @target to the name of the person you're trying to kill.  This makes your aliases more flexible and multifunctional.
-
-Some of the variables are "default variables," which are recommended and used throughout your interface.  In the bar at the bottom of your screen, you will see six boxes labeled &lt;white&gt;Target, Action, Ally, Aid, Mainhand, &lt;gray&gt;and&lt;white&gt; Offhand.&lt;gray&gt; These are important variables to set, so they're listed in a place where you can always see them.  On the right side of your screen, there is also an alias and variable window, which displays all of your set aliases and variables for your convenience.
-
-If one of your variables refers to an item, we recommend that you use the in-game &lt;white&gt;KEYWORD&lt;gray&gt; command and copy all of the keywords, encased in single-quotes (example: 'whole chicken') into your variable to avoid accidentally using the wrong item.
-
-]]
-  )
-elseif helpselect == '2' or helpselect == 'highlights' then
-  cecho(
-    [[
-&lt;white&gt;Highlights&lt;gray&gt;
-
-Syntax: &lt;white&gt;high &lt;color&gt; &lt;text&gt;
-        &lt;white&gt;high&lt;gray&gt; to see and manage existing highlights
-
-&lt;PaleGoldenrod&gt;Highlights &lt;gray&gt;change the color of certain words or phrases.  This can make it easier to see when important affects fall, or if you walk into a room with a "chest" in the description, for example.
-
-For a full list of colors, use the &lt;white&gt;showcolors&lt;gray&gt; command.
-
-]]
-  )
-  helpLinks()
-elseif helpselect == '3' or helpselect == 'alias' then
-  cecho(
-    [[
-&lt;white&gt;Aliases&lt;gray&gt;
-  
-&lt;gray&gt;Syntax: &lt;white&gt;alias &lt;pattern&gt; &lt;full command&gt; &lt;gray&gt;to create or modify an alias
-        &lt;white&gt;alias&lt;gray&gt; to see and manage existing aliases
-        &lt;white&gt;alias remove &lt;pattern&gt; &lt;gray&gt;to delete a single alias
-        &lt;white&gt;alias clear_yes &lt;gray&gt;to delete all aliases
-        &lt;gray&gt;Special characters: &lt;MediumSeaGreen&gt;#&lt;white&gt; = &lt;gray&gt;Your input, &lt;steel_blue&gt;@&lt;white&gt; = &lt;gray&gt;Variable, &lt;OrangeRed&gt;;&lt;white&gt; = &lt;gray&gt;Split
-        
-&lt;PaleGoldenrod&gt;Aliases&lt;gray&gt; are like shortcuts that allow you to enter a complex command by just typing a few letters.  You can make your own using the &lt;white&gt;alias&lt;gray&gt; command, and you can even throw in &lt;PaleGoldenrod&gt;variables&lt;gray&gt; you create using the &lt;white&gt;var&lt;gray&gt; command.&lt;gray&gt;
-
-Examples:
-&lt;violet&gt;alias heal co 'heal'
-&lt;white&gt;Input:      &lt;PaleGoldenrod&gt;Output:
-&lt;white&gt;heal     &lt;OrangeRed&gt;-&gt; &lt;PaleGoldenrod&gt;co 'heal'
-&lt;white&gt;heal pal &lt;OrangeRed&gt;-&gt; &lt;PaleGoldenrod&gt;co 'heal' pal
-
-&lt;violet&gt;alias bt bash &lt;steel_blue&gt;@&lt;pale_goldenrod&gt;target
-&lt;gray&gt;Set @target or any other variable with the &lt;white&gt;variable&lt;gray&gt; command (i.e. &lt;white&gt;var @target Joe&lt;gray&gt;). If you enter something else after 'bt', your command will replace the @target.
-
-&lt;white&gt;Input:       &lt;PaleGoldenrod&gt;Output:
-&lt;white&gt;bt        &lt;OrangeRed&gt;-&gt; &lt;PaleGoldenrod&gt;bash Joe
-&lt;white&gt;bt giant  &lt;OrangeRed&gt;-&gt; &lt;PaleGoldenrod&gt;bash giant
-
-&lt;violet&gt;alias aa &lt;steel_blue&gt;@&lt;pale_goldenrod&gt;action &lt;steel_blue&gt;@&lt;pale_goldenrod&gt;target
-&lt;gray&gt;(If we set &lt;steel_blue&gt;@&lt;pale_goldenrod&gt;action&lt;gray&gt; to "trip" using: &lt;white&gt;var @action trip&lt;gray&gt;)
-&lt;white&gt;Input:       &lt;PaleGoldenrod&gt;Output:
-&lt;white&gt;aa        &lt;OrangeRed&gt;-&gt; &lt;PaleGoldenrod&gt;trip Joe
-&lt;white&gt;aa giant  &lt;OrangeRed&gt;-&gt; &lt;PaleGoldenrod&gt;trip giant
-
-&lt;violet&gt;alias gc get &lt;MediumSeaGreen&gt;# &lt;steel_blue&gt;@&lt;pale_goldenrod&gt;container&lt;OrangeRed&gt;;&lt;violet&gt;eat &lt;MediumSeaGreen&gt;#
-&lt;gray&gt;The # character translates into whatever you enter after the pattern. The ; character splits your alias into multiple commands. So, if @container = "knapsack"...
-&lt;white&gt;Input:            &lt;PaleGoldenrod&gt;Output:
-&lt;white&gt;gc bread       &lt;OrangeRed&gt;-&gt; &lt;PaleGoldenrod&gt;get bread knapsack
-                  eat bread
-                  
-&lt;OrangeRed&gt;Need more help?  Ask on ]]
-  )
-  cechoLink(
-    "&lt;DodgerBlue&gt;The Carrion Fields Official Discord channel!",
-    [[openURL("https://discord.gg/tK8Q5px"]],
-    "Carrion Fields Official Discord",
-    true
-  )
-elseif helpselect == '4' then
-  cecho(
-    [[
-&lt;white&gt;The Friends and Enemies System&lt;gray&gt;
-	
-Syntax: &lt;white&gt;info
-        &lt;white&gt;friend &lt;name&gt;
-        &lt;white&gt;enemy &lt;name&gt;
-        &lt;white&gt;neutral &lt;name&gt;
-&lt;gray&gt;The Friends and Enemies System exists to help you keep track of characters you encounter. You can add &lt;steel_blue&gt;friends&lt;gray&gt;, &lt;orange_red&gt;enemies&lt;gray&gt;, or just &lt;pale_goldenrod&gt;neutral&lt;gray&gt; people to the list, and then fill in details about them as you learn more about them in-game.
-This useful feature might help you remember an enemy's cabal, a warrior's specializations or a shapeshifter's forms. On the WHO and WHERE lists, names of friends will be tinted blue, while enemies' will be tinted red.
-
-&lt;orange_red&gt;* &lt;gray&gt;We recommend that you begin by typing the &lt;white&gt;info&lt;gray&gt; command by itself.&lt;orange_red&gt; *
-  
-]]
-  )
-  helpLinks()
-elseif helpselect == '5' then
-  cecho(
-    [[
-&lt;white&gt;Gauges and the 'Setprompt' Command&lt;gray&gt;
-  
-Syntax: &lt;white&gt;setprompt&lt;gray&gt; (shows all options)
-
-&lt;gray&gt;The gauges on the bottom console show your health, mana, movement and experience to next level based on the percentage of each. They gather those numbers from your prompt, from level-up messages, and from the SCORE command, when you use it.
-
-&lt;gray&gt;The&lt;white&gt; setprompt &lt;gray&gt;command fixes your prompt to work with the GUI. Typing setprompt by itself will set the default Carrionfields prompt for you. You can also make your own prompt using the format described in the in-game HELP PROMPT.
-
-]]
-  )
-  helpLinks()
-elseif helpselect == '6' then
-  cecho(
-    [[
-&lt;white&gt;Item Journal&lt;gray&gt;
-  
-&lt;gray&gt;Syntax: &lt;white&gt;journal &lt;gray&gt;to see a list of stored items
-&lt;gray&gt;        &lt;white&gt;journal &lt;item number&gt; &lt;gray&gt;to view a stored item identification
-&lt;gray&gt;        &lt;white&gt;journal remove &lt;item number&gt; &lt;gray&gt;to remove a stored item identification
-&lt;gray&gt;        &lt;white&gt;journal &lt;keyword&gt; &lt;gray&gt;to search for a keyword, which could be any word in the stored item identification. Suggested keywords include item type, material, attack type, or affect type.
-
-The Item Journal is an automatic feature that automatically logs and stores every item that you identify.
-
-Because some methods of identification are imperfect (i.e. the lore skill), you may wish to use &lt;white&gt;journal remove &lt;item number&gt;&lt;gray&gt; on an item before trying a more reliable method to correct any bad data.
-
-]]
-  )
-  helpLinks()
-elseif helpselect == '7' then
-  cecho(
-    [[
-&lt;white&gt;Target Swapping&lt;gray&gt;
-  
-&lt;gray&gt;Syntax:&lt;white&gt; t1 &lt;steel_blue&gt;&lt;name&gt;&lt;gray&gt;
-&lt;white&gt;t2 &lt;steel_blue&gt;&lt;name&gt;&lt;gray&gt; 
-&lt;white&gt;t3 &lt;steel_blue&gt;&lt;name&gt;&lt;gray&gt;
-&lt;white&gt;t4 &lt;steel_blue&gt;&lt;name&gt;&lt;gray&gt;	
-
-&lt;gray&gt;Each of these commands adds an alternate target to buttons at the top of your interface. The &lt;white&gt;t1&lt;gray&gt; command sets a name that will become your &lt;white&gt;Target&lt;gray&gt; when you press the F1 key or click the button. The &lt;white&gt;t2&lt;gray&gt; command corresponds to your F2 key, and so on.
-
-&lt;gray&gt;For example: Edward is your Target, and Jacob is your t1 alternate target. You press F1 or click on Jacob's name. Jacob then becomes your Target.
-	
-The &lt;white&gt;a5, a6, and a7&lt;gray&gt; commands can be used to add alternate actions to the buttons at the top of your interface.
-
-See &lt;white&gt;guihelp 1&lt;gray&gt; for more on The Targeting System.
-	
-]]
-  )
-  helpLinks()
-elseif helpselect == '8' then
-  cecho(
-    [[
-&lt;white&gt;Logging&lt;gray&gt;
-Syntax:&lt;white&gt; autolog
-       &lt;white&gt; log &lt;steel_blue&gt;&lt;filename&gt;
-       &lt;white&gt; searchlog &lt;filename&gt; &lt;word or phrase&gt;
-
-&lt;gray&gt;Examples: &lt;white&gt;log cabalraid&lt;gray&gt;
-&lt;white&gt;searchlog cabalraid is DEAD!!&lt;gray&gt;
-
-The &lt;white&gt;autolog&lt;gray&gt; command toggles automatic logging of each and every session.  Those raw logs go into the log folder and are named using a date and time code.
-
-&lt;gray&gt;You can also use the &lt;white&gt;log&lt;gray&gt; command to start a separate log. If you enter a filename that doesn't exist, it will create it as a text file in the log folder, which can be easily accessed by clicking the 'Logs' button at the top right corner of the screen. Use &lt;white&gt;log off&lt;gray&gt; to stop logging. The &lt;white&gt;searchlog&lt;gray&gt; command will find instances of a word or set of words in a log.
-
-&lt;gray&gt;This quick logging function was contributed by a member of the Mudlet community. If you want to create more robust logs, you may use Mudlet's stock logging or replay features, located in the row of buttons to the right of the input prompt.
-	
-]]
-  )
-  helpLinks(
-    "See the Mudlet forums for more on",
-    "The Simple Logger",
-    "https://forums.mudlet.org/viewtopic.php?t=1424",
-    "Simple Logger Forum Topic"
-  )
-  
-elseif helpselect == '9' then
-  cecho(
-    [[
-&lt;white&gt;Combat Damage Colors&lt;gray&gt;
-&lt;gray&gt;Syntax:&lt;white&gt; damcolor &lt;on/off&gt;
-             &lt;white&gt; damcolor &lt;incoming/outgoing&gt; &lt;color&gt;
-
-&lt;gray&gt;You can change the colors of damage affecting your character and damage that your character is doing to others.  This makes it easier for many players to immediately understand what is going on in the heat of battle.
-
-Use the &lt;white&gt;showcolors&lt;gray&gt; command for a list of valid colors.
-
-    ]]
-    )
-    helpLinks()    
-elseif helpselect == '10' then
-  cecho(
-    [[
-&lt;white&gt;Mapping&lt;gray&gt;
-
-&lt;gray&gt;The Mudlet generic mapper works with Carrion Fields. We've added a few tweaks with this skin that should help your mapping efforts considerably.
-
-You can create your own maps of areas that you can save and use across multiple characters. However, we ask that you respect the rules and not share secrets and especially do not share maps of Explore Areas.  Rule violations can result in character denials or even sitebans.
-
-To get started mapping, use the &lt;white&gt;map basics&lt;gray&gt; command.
-
-&lt;gray&gt;Additionally, you can click the &lt;white&gt;World Map&lt;gray&gt; button to see an artistic rendering of the overworld, and the &lt;white&gt;Wiki Maps&lt;gray&gt; button to travel to an external website with text-based maps that are updated often by players.
-  
-]]
-  )
-  helpLinks(
-    "For detailed help, see",
-    "The Mudlet Mapping Manual",
-    "https://wiki.mudlet.org/w/Manual:Technical_Manual#Mapper",
-    "The Mudlet Mapping Manual"
-  )
-  helpLinks()
-elseif helpselect == '11' then
-  cecho(
-    [[
-&lt;white&gt;Advanced Aliases &amp; Scripting&lt;gray&gt;
-  
-&lt;gray&gt;We offer two ways to make aliases in Mudlet: our simple, command-line system, and the Mudlet way, which involves Lua scripting.  If you decide to go the advanced route, knowing some basic programming helps. For the brave, visit wiki.mudlet.org for a helpful guide on creating aliases from scratch in Mudlet.
-
-&lt;orange_red&gt;* &lt;gray&gt;To get started making simple ones, it's as easy as typing &lt;white&gt;alias&lt;gray&gt;.  This is what we recommend for the vast majority of players. &lt;orange_red&gt;*&lt;gray&gt;
-
-&lt;orange_red&gt;*&lt;gray&gt; Do not put your unique aliases in the CFGUI folder, or they will be lost when you update the Carrion Fields skin. &lt;orange_red&gt;*&lt;gray&gt;
-
-]]
-  )
-  helpLinks()
-
-elseif helpselect == '12' then
-  cecho(
-    [[
-&lt;white&gt;Useful Utility Commands&lt;gray&gt;
-  
-&lt;gray&gt;Here is a list of commands that will help you to get the most out of this skin and client.
-For more details, enter the command by itself.
-
- GUI COMMANDS:
- &lt;steel_blue&gt;* &lt;white&gt;buffer&lt;gray&gt;         - Sets the length of your scrollback buffer (default: 50,000 lines)
- &lt;steel_blue&gt;* &lt;white&gt;fontsize&lt;gray&gt;       - Sets fontsize of your console window. Type &lt;white&gt;fontsize&lt;gray&gt; alone for details.
- &lt;steel_blue&gt;* &lt;DimGray&gt;guisave&lt;DimGray&gt;        - Save the layout of your windows and tabs (Under Construction)
- &lt;steel_blue&gt;* &lt;DimGray&gt;guireset&lt;DimGray&gt;       - Reset your windows and tabs to default (Under Construction)
- &lt;steel_blue&gt;* &lt;DimGray&gt;guirestore&lt;DimGray&gt;     - Restore your gauges, buttons, channels and Navigator windows (Under Construction)&lt;reset&gt;
- 
- UTILITY COMMANDS:
- &lt;steel_blue&gt;* &lt;white&gt;autolog&lt;gray&gt;        - Toggle automatic logging of every session
- &lt;steel_blue&gt;* &lt;white&gt;showcolors&lt;gray&gt;     - See a list of all colors available for use in highlights and damcolor
- &lt;steel_blue&gt;* &lt;white&gt;queue&lt;gray&gt;          - Creates a list of commands to send; useful for notes/descs/roles/perform
- &lt;steel_blue&gt;* &lt;white&gt;delay&lt;gray&gt;          - Used with queue; sets time delay between sent commands
- &lt;steel_blue&gt;* &lt;white&gt;add&lt;direction&gt;&lt;gray&gt; - After you look all, addeast/addwest etc. to quickly highlight exit descriptions
- 
- EXTRAS:
- &lt;steel_blue&gt;* &lt;white&gt;famwindow&lt;gray&gt;      - For conjurers, switches familiar's views between main and familiar windows
- &lt;steel_blue&gt;* &lt;white&gt;damcolor&lt;gray&gt;       - Allows you to change the colors of incoming and outgoing damage
- &lt;steel_blue&gt;* &lt;white&gt;.&lt;gray&gt;              - Speedwalk. Ex: .2n3es would do 2 steps north, 3 east, then once south
-]]
-  )
-  helpLinks()
-  
-elseif helpselect == '0' then
-  cecho(
-    [[
-&lt;white&gt;Troubleshooting&lt;gray&gt;
-  
-&lt;gray&gt;Many issues with the GUI can be fixed by entering SCORE or AFF in-game. On rare occasions, you may need to use the setprompt command again. If something seems hopelessly broken, try restarting Mudlet. If that fails, try creating a new profile and reloading this package. If you have further questions, comments or suggestions, please email rahsael@carrionfields.com and I'll do my best to help you out. If you're having trouble with an alias or some other type of customization, and copying/modifying an existing one isn't cutting it, check out Mudlet's wiki and forums - they do a great job and the community there is extremely supportive.
-	
-]]
-  )
-else
-  help_menu()
-end</script>
+					<script>guiHelp(matches[2])</script>
 					<command></command>
 					<packageName></packageName>
 					<regex>^guihelp(?:\s+|$)(.*)?$</regex>
@@ -3076,53 +2874,6 @@ else brief_mode = false end</script>
 					<packageName></packageName>
 					<regex>^briefmode$</regex>
 				</Alias>
-				<AliasGroup isActive="yes" isFolder="yes">
-					<name>Text Formatting</name>
-					<script></script>
-					<command></command>
-					<packageName></packageName>
-					<regex></regex>
-					<Alias isActive="yes" isFolder="no">
-						<name>Format Send</name>
-						<script>if matches[2] == "note" or matches[2] == "role" or matches[2] == "desc" then
-  sendFormat(matches[2])
-else
-  cecho("&lt;PaleGoldenrod&gt;Syntax: &lt;white&gt;send &lt;note/desc/role&gt;\n\n")
-  return
-end
-</script>
-						<command></command>
-						<packageName></packageName>
-						<regex>^send (.*)$</regex>
-					</Alias>
-					<Alias isActive="yes" isFolder="no">
-						<name>Format</name>
-						<script>text = matches[2]
-if text == "clear" then
-  clearWindow(FormatConsole)
-  format_table = {}
-  cecho("&lt;PaleGoldenrod&gt;Formatter cleared.")
-  return
-else
-  cfFormat(text)
-end</script>
-						<command></command>
-						<packageName></packageName>
-						<regex>^format (.*)$</regex>
-					</Alias>
-					<Alias isActive="no" isFolder="no">
-						<name>FormatReminder</name>
-						<script>send(matches[1], false)
-cecho(
-  "&lt;steel_blue&gt;Reminder: Use the &lt;white&gt;format&lt;steel_blue&gt; command to format text perfectly.\n"
-)
-disableAlias("FormatReminder")
-enableTimer("FormatReminderTimer")</script>
-						<command></command>
-						<packageName></packageName>
-						<regex>^(note subject|note to|role subject|role|desc|note \+|role \+)(.*)$</regex>
-					</Alias>
-				</AliasGroup>
 				<Alias isActive="yes" isFolder="no">
 					<name>Format</name>
 					<script>cecho("&lt;white&gt;Opening formatter...\n")
@@ -3477,13 +3228,6 @@ end</script>
 					<packageName></packageName>
 					<regex>^resetaliases$</regex>
 				</Alias>
-				<Alias isActive="yes" isFolder="no">
-					<name>New alias</name>
-					<script></script>
-					<command></command>
-					<packageName></packageName>
-					<regex></regex>
-				</Alias>
 			</AliasGroup>
 			<AliasGroup isActive="yes" isFolder="yes">
 				<name>Friends and Enemies</name>
@@ -3776,6 +3520,12 @@ border-style: outset;
 border-color: rgba(255,215,0,.8);
 ]]
 
+infoSpacerStyle =
+  [[
+background-color: #191919; 
+border-width: 0px;
+]]
+
 function buildGUI()
   channelCon =
     channelCon or
@@ -4022,6 +3772,29 @@ function buildGUI()
     )
   gearCon:hide()
   gearCon:attachToBorder("right")
+inventoryCon =
+    inventoryCon or
+    Adjustable.Container:new(
+      {
+        name = "inventoryCon",
+        x = "70%",
+        y = "0%",
+        width = "30%",
+        height = "50%",
+        adjLabelstyle = infoContainerStyle,
+        buttonstyle = CF_button,
+        buttonFontSize = 10,
+        buttonsize = 20,
+        titleText = "Inventory",
+        titleTxtColor = "LightGoldenrod",
+        padding = 5,
+        autoLoad = false,
+        lockStyle = "border",
+        locked = false,
+      }
+    )
+  inventoryCon:hide()
+  inventoryCon:attachToBorder("right")  
   journalCon =
     journalCon or
     Adjustable.Container:new(
@@ -4256,10 +4029,23 @@ buildGUI()</script>
 				<name>Initialize</name>
 				<packageName></packageName>
 				<script>-- Check for updates
-downloadFile(getMudletHomeDir().."/version.txt", "https://github.com/Rahsael/CFGUI/releases/latest/download/version.txt")
+downloadFile(
+  getMudletHomeDir() .. "/version.txt", "https://github.com/Rahsael/CFGUI/raw/master/version.txt"
+)
+downloadFile(
+  getMudletHomeDir() .. "/loader.lua", "https://github.com/Rahsael/CFGUI/raw/master/loader.lua"
+)
+downloadFile(
+  getMudletHomeDir() .. "/guihelp.lua", "https://github.com/Rahsael/CFGUI/raw/master/guihelp.lua"
+
+downloadFile(
+  getMudletHomeDir() .. "/CFGUI.xml", "https://github.com/Rahsael/CFGUI/raw/master/CFGUI.xml"
+)
+)
+updating = false
+update_delayed = false
 -- Lengthen Buffer
 setConsoleBufferSize("main", 50000, 1000)
-
 -- INITIALIZE VARIABLES
 vt = {}
 people = {}
@@ -4273,7 +4059,7 @@ offhand = {}
 highlights = {}
 monitored_affects = {}
 monitor = {}
-format_table = {}
+id_replace = {}
 send_queue = {}
 console_fontsize = {}
 if aliases == nil then
@@ -4281,34 +4067,32 @@ if aliases == nil then
 end
 if user_variables == nil then
   user_variables = {}
-  user_variables = { 
-  target = "",
-  action = "",
-  potion = "",
-  container = "",
-  food = "",
-  drink = "",
-  ally = "",
-  aid = "",
-  mainhand = "",
-  offhand = "",
-  }
+  user_variables =
+    {
+      target = "",
+      action = "",
+      potion = "",
+      container = "",
+      food = "",
+      drink = "",
+      ally = "",
+      aid = "",
+      mainhand = "",
+      offhand = "",
+    }
 end
-
-id_table = {}
 damage_color_check = true
 outgoing_damage_color = "yellow"
 incoming_damage_color = "ansiLightRed"
-
 -- Loading previous variable settings...
 if not (io.exists(PkgPath .. "vt.lua")) then
   --echo("\n\nCreating: vt.lua\n\n")
-  f = io.open(PkgPath.."vt.lua", "a")
+  f = io.open(PkgPath .. "vt.lua", "a")
   f:write("")
   f:close()
-	else
+else
   --echo("loading vt.lua")
-	table.load(PkgPath.."vt.lua", vt)	
+  table.load(PkgPath .. "vt.lua", vt)
 end
 autolog = vt.autolog
 charname = tostring(vt.charname)
@@ -4344,24 +4128,22 @@ GUI_load = vt.GUI_load
 activeset = vt.activeset
 buffersize = tonumber(vt.buffersize)
 queue_delay = (tonumber(vt.queue_delay) or 0.5)
-
 if console_fontsize == nil or console_fontsize == {} then
-  console_fontsize = {
-    Calendar = 10,
-    Room = 10,
-    Equipment = 10,
-    Inventory = 10,
-    Affects = 10,
-    Monitor = 12,
-    Communication = 10,
-    Aliases = 10,
-    Variables = 10,
-    Familiar = 10,
-    Journal = 10,
-  }
-  
+  console_fontsize =
+    {
+      Calendar = 10,
+      Room = 10,
+      Equipment = 10,
+      Inventory = 10,
+      Affects = 10,
+      Monitor = 12,
+      Communication = 10,
+      Aliases = 10,
+      Variables = 10,
+      Familiar = 10,
+      Journal = 10,
+    }
 end
-
 if vt.damage_color_check ~= nil and vt.damage_color_check ~= "" then
   damage_color_check = vt.damage_color_check
 end
@@ -4371,81 +4153,84 @@ end
 if vt.outgoing_damage_color ~= nil and vt.outgoing_damage_color ~= "" then
   outgoing_damage_color = vt.outgoing_damage_color
 end
-
 --Set buffer size per vt
 if buffersize and buffersize ~= 0 then
   setConsoleBufferSize("main", buffersize, 1000)
 end
-
 --Dark theme as default
 if vt.theme == nil or vt.theme == "" then
   theme = "dark"
-  cecho("\n\n&lt;purple&gt;* &lt;gray&gt;Use &lt;white&gt;theme light&lt;gray&gt; or &lt;white&gt;theme dark&lt;gray&gt; to switch between dark and light modes.\n\n")
+  cecho(
+    "\n\n&lt;purple&gt;* &lt;gray&gt;Use &lt;white&gt;theme light&lt;gray&gt; or &lt;white&gt;theme dark&lt;gray&gt; to switch between dark and light modes.\n\n"
+  )
   vt.theme = "dark"
 else
   theme = vt.theme
 end
-
 --Load window settings, if saving
 if GUI_load == true then
   Adjustable.Container:loadAll()
 end
-
 if not (io.exists(PkgPath .. "people.lua")) then
   --echo("Creating: people.lua; ")
-  f = io.open(PkgPath.."people.lua", "a")
+  f = io.open(PkgPath .. "people.lua", "a")
   f:write("")
   f:close()
-	else
---  echo("loading people.lua")
-	table.load(PkgPath.."people.lua", people)
+else
+  --  echo("loading people.lua")
+  table.load(PkgPath .. "people.lua", people)
 end
-
 if not (io.exists(PkgPath .. "weaponsets.lua")) then
   --echo("Creating: weaponsets.lua; ")
-  f = io.open(PkgPath.."weaponsets.lua", "a")
+  f = io.open(PkgPath .. "weaponsets.lua", "a")
   f:write("")
   f:close()
-	else
---  echo("loading weaponsets.lua")
-	table.load(PkgPath.."weaponsets.lua", weaponsets)
+else
+  --  echo("loading weaponsets.lua")
+  table.load(PkgPath .. "weaponsets.lua", weaponsets)
 end
-
 if not (io.exists(PkgPath .. "monitored_affects.lua")) then
   --echo("Creating: monitored_affects.lua; ")
-  f = io.open(PkgPath.."monitored_affects.lua", "a")
+  f = io.open(PkgPath .. "monitored_affects.lua", "a")
   f:write("")
   f:close()
-	else
---  echo("loading monitored_affects.lua")
-	table.load(PkgPath.."monitored_affects.lua", monitored_affects)
+else
+  --  echo("loading monitored_affects.lua")
+  table.load(PkgPath .. "monitored_affects.lua", monitored_affects)
 end
-
 if not (io.exists(PkgPath .. "highlights.lua")) then
   --echo("Creating: highlights.lua; ")
-  f = io.open(PkgPath.."highlights.lua", "a")
+  f = io.open(PkgPath .. "highlights.lua", "a")
   f:write("")
   f:close()
-	else
---  echo("loading highlights.lua")
-	table.load(PkgPath.."highlights.lua", highlights)
-  for _,highlight_data in ipairs(highlights) do
-    highlight_data["trigger"] = tempTrigger(highlight_data["text"], function() selectString(highlight_data["text"], 1) fg(highlight_data["color"]) resetFormat() end)    
+else
+  --  echo("loading highlights.lua")
+  table.load(PkgPath .. "highlights.lua", highlights)
+  for index, highlight_data in ipairs(highlights) do
+    highlight_data["trigger"] =
+      tempTrigger(
+        highlight_data["text"],
+        function()
+          selectString(highlight_data["text"], 1)
+          fg(highlight_data["color"])
+          resetFormat()
+        end
+      )
+      highlights[index]["trigger"] = highlight_data["trigger"]
   end
 end
-
 if not (io.exists(PkgPath .. "aliases.lua")) then
   --echo("Creating: aliases.lua; ")
-  f = io.open(PkgPath.."aliases.lua", "a")
+  f = io.open(PkgPath .. "aliases.lua", "a")
   f:write("")
   f:close()
   aliases = {}
-	elseif #aliases &gt; 0 then
-    return
-  else
---  echo("loading aliases.lua")
-	table.load(PkgPath.."aliases.lua", aliases)
---  echo("aliases.lua loaded.\n")
+elseif #aliases &gt; 0 then
+  return
+else
+  --  echo("loading aliases.lua")
+  table.load(PkgPath .. "aliases.lua", aliases)
+  --  echo("aliases.lua loaded.\n")
   -- Re-create all of the tempAliases
   for alias, alias_data in ipairs(aliases) do
     if aliases[alias]["temp_alias"] then
@@ -4453,36 +4238,50 @@ if not (io.exists(PkgPath .. "aliases.lua")) then
     end
   end
   for alias, alias_data in ipairs(aliases) do
-    alias_data["temp_alias"] = tempAlias([[^]]..alias_data["pattern"]..[[(?: (.*))?$]], alias_data["script"])
+    alias_data["temp_alias"] =
+      tempAlias([[^]] .. alias_data["pattern"] .. [[(?: (.*))?$]], alias_data["script"])
     enableAlias(alias_data["temp_alias"])
   end
 end
-
 if not (io.exists(PkgPath .. "user_variables.lua")) then
   --echo("Creating: user_variables.lua; ")
-  f = io.open(PkgPath.."user_variables.lua", "a")
+  f = io.open(PkgPath .. "user_variables.lua", "a")
   f:write("")
   f:close()
 else
-  table.load(PkgPath.."user_variables.lua", user_variables)
+  table.load(PkgPath .. "user_variables.lua", user_variables)
 end
-
 if not (io.exists(PkgPath .. "id_table.lua")) then
-	--echo("Creating: id_table.lua; ")
-  f = io.open(PkgPath.."id_table.lua", "a")
+  --echo("Creating: id_table.lua; ")
+  f = io.open(PkgPath .. "id_table.lua", "a")
   f:write("")
   f:close()
-	else
-	table.load(PkgPath.."id_table.lua", id_table)
+  id_table = {}
+else
+  id_table = {}
+  table.load(PkgPath .. "id_table.lua", id_table)
+  for index, id_data in ipairs(id_table) do
+    if id_data["tag_trigger"] ~= nil and id_data["tag_trigger"] ~= "" then
+      cecho(
+              " &lt;LightGoldenrod&gt;[ &lt;" .. id_data["tag_color"] .. "&gt;" .. id_data["tag"] .. "&lt;LightGoldenrod&gt; ]&lt;reset&gt;"
+            )
+      id_data["tag_trigger"] =
+        tempTrigger(
+          id_data["name"],
+          function()
+            cecho(
+              " &lt;LightGoldenrod&gt;[ &lt;" .. id_data["tag_color"] .. "&gt;" .. id_data["tag"] .. "&lt;LightGoldenrod&gt; ]&lt;reset&gt;"
+            )
+          end
+        )
+      id_table[index]["tag_trigger"] = id_data["tag_trigger"]
+    end
+  end
 end
-
 -- Disable capture triggers
 disableTrigger("DescCap_begin")
 disableTrigger("ID_capture")
-
-promptskip = false
-cfCalendar = "https://www.googleapis.com/calendar/v3/calendars/a3i0u10fd6rv0e83v9srjjn884@group.calendar.google.com/events?key=AIzaSyAWebu8qQlLZOBKbhmKTahh2qrHCpsRtok"
-loaderCheck()</script>
+promptskip = false</script>
 				<eventHandlerList />
 			</Script>
 			<ScriptGroup isActive="yes" isFolder="yes">
@@ -6094,9 +5893,8 @@ end</script>
 				<name>versionCheck</name>
 				<packageName></packageName>
 				<script>--- CFGUI VERSION
-GUI_version = "Version: 1.2.2"
-update_pending = false
---Install CF_Loader to ensure proper installation
+GUI_version = "1.4.1"
+-- Initialize downloads version.txt from Github. If the download is successful, versionCheck runs.
 
 function versionCheck(a, filename)
   --  local filename = getMudletHomeDir().."/version.txt"
@@ -6106,66 +5904,273 @@ function versionCheck(a, filename)
   end
   local f, s, versiontxt = io.open(filename)
   if f then
-    versiontxt = f:read("*a");
+    gui_versiontxt = f:read("*l");
+    obsolete_loader_version = f:read("*l");
+    patchnotes = f:read("*a");
     io.close(f)
   end
-  if versiontxt == GUI_version then
-    cecho(
-      "&lt;gold&gt;Your Carrion Fields skin is up-to-date: " ..
-      GUI_version ..
-      "\n&lt;gray&gt;Type &lt;white&gt;guihelp&lt;gray&gt; to get to know your client's features.\n\n"
-    )
+  --Check GUI version
+  if gui_versiontxt == GUI_version then
     return
   else
-    cecho(
-      [[
-      
-&lt;maroon&gt;   * * &lt;gold&gt;A new update is available: ]] ..
-      versiontxt ..
-      [[ &lt;maroon&gt;* *
-]]
-    )
+    updateWindow(gui_versiontxt)
   end
-  uninstallPackage("CF_Loader")
-  raiseEvent("update_skin")
 end</script>
 				<eventHandlerList>
 					<string>sysDownloadDone</string>
 				</eventHandlerList>
 			</Script>
 			<Script isActive="yes" isFolder="no">
-				<name>loaderCheck</name>
+				<name>loaderVersion</name>
 				<packageName></packageName>
-				<script>function loaderCheck()
-  if exists("CF_Loader", "script") == 0 then
-    downloadFile(getMudletHomeDir() .. "/CF_Loader.zip","https://github.com/Rahsael/CFGUI/raw/master/CF_Loader.zip")
-    tempTimer(2, [[installPackage(getMudletHomeDir() .. "/CF_Loader.zip")]])
-    tempTimer(7, [[if exists("CF_Loader", "script") == 0 then cecho("&lt;OrangeRed&gt;WARNING: CF_LOADER NOT INSTALLED.\n") end]])
+				<script>function loaderVersion(a, filename)
+  if not filename:find("loader.lua", 1, true) then
+    return
+  else
+    local f, s, loaderlua = io.open(filename)
+    if f then
+      cf_loader_script = f:read("*a");
+      io.close(f)
+    end
+  loaderCheck()
   end
 end</script>
 				<eventHandlerList>
-					<string>sysLoadEvent</string>
-					<string>sysUninstall</string>
+					<string>sysDownloadDone</string>
 				</eventHandlerList>
 			</Script>
 			<Script isActive="yes" isFolder="no">
-				<name>updateSkin</name>
+				<name>helpVersion</name>
 				<packageName></packageName>
-				<script>function updateSkin()
-  downloadFile(getMudletHomeDir() .. "/CF_Loader.zip","https://github.com/Rahsael/CFGUI/raw/master/CF_Loader.zip")
-  uninstallPackage("CFGUI")
-  --    cecho("INSTALLING CF_LOADER")
-  installPackage(getMudletHomeDir() .. "/CF_Loader.zip")
-  -- Downloading CFGUI just in case CF_Loader hasn't already, also invoking CF_Loader
-  downloadFile(
-    getMudletHomeDir() .. "/CFGUI.zip",
-    "https://github.com/Rahsael/CFGUI/releases/latest/download/CFGUI.zip"
-  )
-  update_location = getMudletHomeDir() .. "/CFGUI/CFGUI.zip"
-  update_pending = true
+				<script>function helpVersion(a, filename)
+  if not filename:find("guihelp.lua", 1, true) then
+    return
+  else
+    local f, s, guihelplua = io.open(filename)
+    if f then
+      guihelp_script = f:read("*a");
+      io.close(f)
+    end
+    if exists("guiHelp", "script") == 0 then
+      permScript("guiHelp", "Functions", guihelp_script)
+    elseif getScript("guiHelp") ~= guihelp_script then
+      setScript("guiHelp", guihelp_script)
+    end
+  enableScript("guiHelp")
+  end
 end</script>
 				<eventHandlerList>
-					<string>update_skin</string>
+					<string>sysDownloadDone</string>
+				</eventHandlerList>
+			</Script>
+			<Script isActive="yes" isFolder="no">
+				<name>updateWindow</name>
+				<packageName></packageName>
+				<script>--Updated 2/3/2022
+
+function updateWindow(versiontxt)
+  updateCon =
+    updateCon or
+    Adjustable.Container:new(
+      {
+        name = "updateCon",
+        x = "25%",
+        y = "0%",
+        width = "50%",
+        height = "50%",
+        adjLabelstyle = infoContainerStyle,
+        buttonstyle = CF_button,
+        buttonFontSize = 0,
+        buttonsize = 0,
+        titleText = "Update Available",
+        titleTxtColor = "LightGoldenrod",
+        padding = 5,
+        autoLoad = false,
+        lockStyle = "border",
+        locked = false,
+      }
+    )
+  updateCon:show()
+  UpdateVBox =
+    Geyser.VBox:new({name = "UpdateVBox", x = 5, y = 5, width = "98%", height = "98%"}, updateCon)
+  UpdateHBox = Geyser.HBox:new({name = "UpdateHBox"}, UpdateVBox)
+  UpdateConsole =
+    Geyser.MiniConsole:new(
+      {name = 'UpdateConsole', v_stretch_factor = 5, autoWrap = true, scrollBar = false},
+      UpdateVBox
+    )
+  UpdateConsole:setFontSize(12)
+  setBackgroundColor("UpdateConsole", 0, 0, 0, 0)
+  if getAvailableFonts()["Cascadia Mono"] then
+    setFont("UpdateConsole", "Cascadia Mono")
+  end
+  OptionsHBox = Geyser.HBox:new({name = "OptionsHBox", v_stretch_factor = 1}, UpdateVBox)
+  OptionsSpacerLabel1 =
+    Geyser.Label:new({name = "OptionsSpacerLabel1", h_stretch_factor = 0.5}, OptionsHBox)
+    OptionsSpacerLabel1:setStyleSheet(infoSpacerStyle)
+    
+  YesLabel = Geyser.Label:new({name = "YesLabel", h_stretch_factor = 1}, OptionsHBox)
+  YesLabel:setStyleSheet(
+    [[
+QLabel{ 
+  background-color: rgba(178,34,34,.3);
+  border-style: outset;
+  border-width: 1px;
+  border-color: rgba(255,215,0,.8);
+  border-radius: 5px;
+  margin: 5px;
+	font-family: 'IM FELL DW Pica', serif;
+  qproperty-wordWrap: true;
+	}
+	QLabel::hover{
+	background-color: rgba(178,34,34,1);
+  border-style: outset;
+  border-width: 1px;
+  border-color: rgba(255,215,0,.8);
+  border-radius: 5px;
+  margin: 5px;
+	font-family: 'IM FELL DW Pica', serif;
+  qproperty-wordWrap: true;
+	}
+]]
+  )
+  YesLabel:setFontSize(14)
+  YesLabel:setFgColor("White")
+  YesLabel:echo("&lt;center&gt;Update Now!")
+  YesLabel:setClickCallback("updateSkin")
+  
+  OptionsSpacerLabel2 =
+    Geyser.Label:new({name = "OptionsSpacerLabel2", h_stretch_factor = 0.5}, OptionsHBox) 
+  OptionsSpacerLabel2:setStyleSheet(infoSpacerStyle)
+  
+  NoLabel = Geyser.Label:new({name = "NoLabel", h_stretch_factor = 1}, OptionsHBox)
+  NoLabel:setStyleSheet(
+    [[
+QLabel{ 
+  background-color: rgba(70,130,180,.3);
+  border-style: outset;
+  border-width: 1px;
+  border-color: rgba(255,215,0,.8);
+  border-radius: 5px;
+  margin: 5px;
+	font-family: 'IM FELL DW Pica', serif;
+  qproperty-wordWrap: true;
+	}
+	QLabel::hover{
+	background-color: rgba(70,130,180,1);
+  border-style: outset;
+  border-width: 1px;
+  border-color: rgba(255,215,0,.8);
+  border-radius: 5px;
+  margin: 5px;
+	font-family: 'IM FELL DW Pica', serif;
+  qproperty-wordWrap: true;
+	}
+]]
+  )
+  NoLabel:setFontSize(14)
+  NoLabel:setFgColor("gray")
+  NoLabel:echo("&lt;center&gt;Maybe Later...")
+  NoLabel:setClickCallback("noButton")
+  OptionsSpacerLabel3 =
+    Geyser.Label:new({name = "OptionsSpacerLabel3", h_stretch_factor = 0.5}, OptionsHBox)
+  OptionsSpacerLabel3:setStyleSheet(infoSpacerStyle)
+  clearWindow("UpdateConsole")
+  UpdateConsole:cecho(
+    [[
+
+&lt;gold&gt;A new version of your Carrion Fields client is available!&lt;reset&gt;
+
+]]..(patchnotes or [[]])..[[
+
+
+&lt;red&gt;NOTE: &lt;reset&gt;Mudlet will close during the update and you will need to re-open it. If you have other profiles open, save them before updating.
+
+For best results, make sure you have the latest version of Mudlet installed. You can check for updates under the "About" toolbar at the top of your screen.
+
+]]
+  )
+end
+
+function noButton()
+  update_delayed = true
+  updateCon:hide()
+  winMenuUpdate() -- Update the navigator to include the UPDATE option
+end
+ 
+
+function updateSkin()
+  update_delayed = false
+  winMenuUpdate() 
+  updateCon:hide()
+  downloadFile(getMudletHomeDir() .. "/CFGUI.zip", "https://github.com/Rahsael/CFGUI/releases/latest/download/CFGUI.zip")
+  uninstallPackage("CFGUI")
+end</script>
+				<eventHandlerList />
+			</Script>
+			<Script isActive="yes" isFolder="no">
+				<name>loaderCheck</name>
+				<packageName></packageName>
+				<script>function loaderCheck()
+  --Last update: 2/14/21
+  --First, make sure we don't have the problematic old CF_Loader package installed...
+  if exists("CF_Loader", "script") then
+    disableScript("CF_Loader")
+    uninstallPackage("CF_Loader")
+  end
+  if exists("CF-Loader", "script") then
+    disableScript("CF-Loader")
+    uninstallPackage("CF-Loader")
+  end
+  --If no loader script downloaded, then default to one that we know works (2/15/2020).
+  if cf_loader_script == nil then
+    cf_loader_script =
+    [[
+function downloadPkg()
+  if exists("CFGUI", "script") &gt; 0 then
+    return
+  else
+    downloadFile(getMudletHomeDir() .. "/CFGUI.zip", "https://github.com/Rahsael/CFGUI/releases/latest/download/CFGUI.zip")  
+  end
+end
+registerAnonymousEventHandler("sysLoadEvent", "downloadPkg")
+
+function installReady(event, file)
+  if file ~= getMudletHomeDir().."/CFGUI.zip" then
+    return
+  else
+    installPackage(getMudletHomeDir().."/CFGUI.zip")
+  end
+end
+registerAnonymousEventHandler("sysDownloadDone", "installReady")
+]]
+  end
+  if exists("cfLoader", "script") == 0 then
+    permScript("cfLoader", "", cf_loader_script)
+  elseif getScript("cfLoader") ~= cf_loader_script then
+    setScript("cfLoader", cf_loader_script)
+  end
+  enableScript("cfLoader")
+end</script>
+				<eventHandlerList />
+			</Script>
+			<Script isActive="yes" isFolder="no">
+				<name>installVerify</name>
+				<packageName></packageName>
+				<script>function installVerify(_, package)
+  if exists("cfLoader", "script") &gt; 0 then
+    return
+  else
+    loaderCheck()
+  end
+  if exists("CFGUI", "script") == 0 then
+    cecho("&lt;OrangeRed&gt;Warning: CFGUI not installed.\n\n")
+    return  
+  end
+ end</script>
+				<eventHandlerList>
+					<string>sysInstall</string>
+					<string>sysUninstall</string>
 				</eventHandlerList>
 			</Script>
 			<Script isActive="yes" isFolder="no">
@@ -6572,17 +6577,46 @@ SysTime:echo("&lt;center&gt;")</script>
 				<eventHandlerList />
 			</Script>
 			<Script isActive="yes" isFolder="no">
+				<name>backupJournal</name>
+				<packageName></packageName>
+				<script>function backupJournal()
+  table.save(PkgPath.. "id_table.lua", id_table)
+  if io.exists(PkgPath .. "backup/id_table/id_table_backup_"..getTime(true, "dd")..".lua") then
+    local BackupPath = PkgPath .. "backup/id_table/id_table_backup_"..getTime(true, "dd")..".lua"
+    local backup_size = tonumber(lfs.attributes(BackupPath)["size"])
+    local id_table_size = tonumber(lfs.attributes(PkgPath .. "id_table.lua")["size"])
+    if backup_size &lt; (id_table_size - 150) then
+      table.save(PkgPath .. "backup/id_table/id_table_backup_"..getTime(true, "dd")..".lua", id_table)
+      return
+    end
+  else
+    -- if it does not exist, create new file for backup
+    if not io.exists(PkgPath .. "backup") then
+      lfs.mkdir(PkgPath .. "backup")
+    end
+    if not io.exists(PkgPath .. "backup/id_table") then
+      lfs.mkdir(PkgPath .. "backup/id_table")
+    end
+    local Backup = io.open(PkgPath .. "backup/id_table/id_table_backup_"..getTime(true, "dd")..".lua", "a")
+    Backup:write("")
+    Backup:close()
+    table.save(PkgPath .. "backup/id_table/id_table_backup_"..getTime(true, "dd")..".lua", id_table)
+  end
+  return
+end
+
+</script>
+				<eventHandlerList />
+			</Script>
+			<Script isActive="yes" isFolder="no">
 				<name>Buttons</name>
 				<packageName></packageName>
 				<script>buttons = {}
-Header = Geyser.HBox:new({
-  name = "Header",
-  x = 0, y = 0,
-  width = "100%",
-  height = "100%",
-}, buttonCon)
-
-IconCSS = CSSMan.new([[
+Header =
+  Geyser.HBox:new({name = "Header", x = 0, y = 0, width = "100%", height = "100%"}, buttonCon)
+IconCSS =
+  CSSMan.new(
+    [[
   background-color: rgba(178,34,34,.3);
   border-style: inset;
   border-width: 1px;
@@ -6591,18 +6625,16 @@ IconCSS = CSSMan.new([[
   margin: 5px;
 	font-family: 'IM FELL DW Pica', serif;
   qproperty-wordWrap: true;
-]])
-
-
-for i=1,4 do
-  buttons["Icon"..i] = Geyser.Label:new({
-    name = "buttons.Icon"..i,
-  },Header)
-  buttons["Icon"..i]:setStyleSheet(IconCSS:getCSS())
-	buttons["Icon"..i]:setFontSize(11)
-	buttons["Icon"..i]:setFgColor("LightGoldenrod")
-	buttons["Icon"..i]:setToolTip("Set with alias 't"..i.."'", 10)
-	buttons["Icon"..i]:setStyleSheet([[
+]]
+  )
+for i = 1, 4 do
+  buttons["Icon" .. i] = Geyser.Label:new({name = "buttons.Icon" .. i}, Header)
+  buttons["Icon" .. i]:setStyleSheet(IconCSS:getCSS())
+  buttons["Icon" .. i]:setFontSize(11)
+  buttons["Icon" .. i]:setFgColor("LightGoldenrod")
+  buttons["Icon" .. i]:setToolTip("Set with alias 't" .. i .. "'", 10)
+  buttons["Icon" .. i]:setStyleSheet(
+    [[
 	QLabel{ 
   background-color: rgba(178,34,34,.3);
   border-style: outset;
@@ -6623,27 +6655,24 @@ for i=1,4 do
 	font-family: 'IM FELL DW Pica', serif;
   qproperty-wordWrap: true;
 	}
-]])
-
-	if vt["t"..i] ~= nil then
-		buttons["Icon"..i]:echo("&lt;center&gt;F"..i..": "..vt["t"..i])
-	else
-		buttons["Icon"..i]:echo("&lt;center&gt;Set with 't"..i.."'")
-	end	
-
-buttons["Icon"..i]:setClickCallback("tbutton"..i)
+]]
+  )
+  if vt["t" .. i] ~= nil then
+    buttons["Icon" .. i]:echo("&lt;center&gt;F" .. i .. ": " .. vt["t" .. i])
+  else
+    buttons["Icon" .. i]:echo("&lt;center&gt;Set with 't" .. i .. "'")
+  end
+  buttons["Icon" .. i]:setClickCallback("tbutton" .. i)
 end
-
-for i=5,7 do
-  buttons["Icon"..i] = Geyser.Label:new({
-    name = "buttons.Icon"..i,
-  },Header)
-  buttons["Icon"..i]:setStyleSheet(IconCSS:getCSS())
-	buttons["Icon"..i]:setFontSize(11)
-	buttons["Icon"..i]:setFgColor("LightGoldenrod")
-  buttons["Icon"..i]:setToolTip("Set with alias 'a"..i.."'", 10)
-	buttons["Icon"..i]:echo("&lt;center&gt;Set with 'a"..i.."'")
-	buttons["Icon"..i]:setStyleSheet([[
+for i = 5, 7 do
+  buttons["Icon" .. i] = Geyser.Label:new({name = "buttons.Icon" .. i}, Header)
+  buttons["Icon" .. i]:setStyleSheet(IconCSS:getCSS())
+  buttons["Icon" .. i]:setFontSize(11)
+  buttons["Icon" .. i]:setFgColor("LightGoldenrod")
+  buttons["Icon" .. i]:setToolTip("Set with alias 'a" .. i .. "'", 10)
+  buttons["Icon" .. i]:echo("&lt;center&gt;Set with 'a" .. i .. "'")
+  buttons["Icon" .. i]:setStyleSheet(
+    [[
 	QLabel{ 
   background-color: rgba(70,130,180,.3);
   border-style: outset;
@@ -6664,24 +6693,21 @@ for i=5,7 do
 	font-family: 'IM FELL DW Pica', serif;
   qproperty-wordWrap: true;
 	}
-]])
-
-if vt["a"..i] ~= nil then
-		buttons["Icon"..i]:echo("&lt;center&gt;F"..i..": "..vt["a"..i])
-	else
-		buttons["Icon"..i]:echo("&lt;center&gt;Set with 'a"..i.."'")
-	end	
-
-	buttons["Icon"..i]:setClickCallback("abutton"..i)
+]]
+  )
+  if vt["a" .. i] ~= nil then
+    buttons["Icon" .. i]:echo("&lt;center&gt;F" .. i .. ": " .. vt["a" .. i])
+  else
+    buttons["Icon" .. i]:echo("&lt;center&gt;Set with 'a" .. i .. "'")
+  end
+  buttons["Icon" .. i]:setClickCallback("abutton" .. i)
 end
-
-for i=8,12 do
-  buttons["Icon"..i] = Geyser.Label:new({
-    name = "buttons.Icon"..i,
-  },Header)
-	buttons["Icon"..i]:setFontSize(11)
-	buttons["Icon"..i]:setFgColor("LightGoldenrod")
-	buttons["Icon"..i]:setStyleSheet([[
+for i = 8, 12 do
+  buttons["Icon" .. i] = Geyser.Label:new({name = "buttons.Icon" .. i}, Header)
+  buttons["Icon" .. i]:setFontSize(11)
+  buttons["Icon" .. i]:setFgColor("LightGoldenrod")
+  buttons["Icon" .. i]:setStyleSheet(
+    [[
 	QLabel{ 
   background-color: rgba(153,50,204,.3);
   border-style: outset;
@@ -6702,117 +6728,123 @@ for i=8,12 do
 	font-family: 'IM FELL DW Pica', serif;
   qproperty-wordWrap: true;
 	}
-]])
-	buttons["Icon"..i]:setClickCallback("abutton"..i)
-  end
-
+]]
+  )
+  buttons["Icon" .. i]:setClickCallback("abutton" .. i)
+end
 buttons.Icon8:echo("&lt;center&gt;CF Discord")
 buttons.Icon8:setClickCallback("openWebPage", "https://discord.gg/uy9rHGz")
 
 function tbutton1()
-	if t1 ~= nil then
-	target = t1
-	cecho("&lt;white&gt;Target set to &lt;firebrick&gt;"..target.."&lt;white&gt;.\n\n")
-	TargetInput:echo("&lt;center&gt;"..target)
-
-	table.save(PkgPath.."vt.lua", vt)
-else
-	cecho("&lt;white&gt;You do not have a target assigned to F1. Use the 't1' command to add an alternate target.\n\n")
-	end
+  if t1 ~= nil then
+    target = t1
+    cecho("&lt;white&gt;Target set to &lt;firebrick&gt;" .. target .. "&lt;white&gt;.\n\n")
+    TargetInput:echo("&lt;center&gt;" .. target)
+    table.save(PkgPath .. "vt.lua", vt)
+  else
+    cecho(
+      "&lt;white&gt;You do not have a target assigned to F1. Use the 't1' command to add an alternate target.\n\n"
+    )
+  end
 end
 
 function tbutton2()
-	if t2 ~= nil then
-	target = t2
-	cecho("&lt;white&gt;Target set to &lt;firebrick&gt;"..target.."&lt;white&gt;.\n\n")
-	TargetInput:echo("&lt;center&gt;"..target)
-
-	table.save(PkgPath.."vt.lua", vt)
-else
-	cecho("&lt;white&gt;You do not have a target assigned to F2. Use the 't2' command to add an alternate target.\n\n")
-	end
+  if t2 ~= nil then
+    target = t2
+    cecho("&lt;white&gt;Target set to &lt;firebrick&gt;" .. target .. "&lt;white&gt;.\n\n")
+    TargetInput:echo("&lt;center&gt;" .. target)
+    table.save(PkgPath .. "vt.lua", vt)
+  else
+    cecho(
+      "&lt;white&gt;You do not have a target assigned to F2. Use the 't2' command to add an alternate target.\n\n"
+    )
+  end
 end
 
 function tbutton3()
-	if t3 ~= nil then
-	target = t3
-	cecho("&lt;white&gt;Target set to &lt;firebrick&gt;"..target.."&lt;white&gt;.\n\n")
-	TargetInput:echo("&lt;center&gt;"..target)
-
-	table.save(PkgPath.."vt.lua", vt)
-else
-	cecho("&lt;white&gt;You do not have a target assigned to F3. Use the 't3' command to add an alternate target.\n\n")
-	end
+  if t3 ~= nil then
+    target = t3
+    cecho("&lt;white&gt;Target set to &lt;firebrick&gt;" .. target .. "&lt;white&gt;.\n\n")
+    TargetInput:echo("&lt;center&gt;" .. target)
+    table.save(PkgPath .. "vt.lua", vt)
+  else
+    cecho(
+      "&lt;white&gt;You do not have a target assigned to F3. Use the 't3' command to add an alternate target.\n\n"
+    )
+  end
 end
 
 function tbutton4()
-	if t4 ~= nil then
-	target = t4
-	cecho("&lt;white&gt;Target set to &lt;firebrick&gt;"..target.."&lt;white&gt;.\n\n")
-	TargetInput:echo("&lt;center&gt;"..target)
-
-	table.save(PkgPath.."vt.lua", vt)
-else
-	cecho("&lt;white&gt;You do not have a target assigned to F4. Use the 't4' command to add an alternate target.\n\n")
-	end
+  if t4 ~= nil then
+    target = t4
+    cecho("&lt;white&gt;Target set to &lt;firebrick&gt;" .. target .. "&lt;white&gt;.\n\n")
+    TargetInput:echo("&lt;center&gt;" .. target)
+    table.save(PkgPath .. "vt.lua", vt)
+  else
+    cecho(
+      "&lt;white&gt;You do not have a target assigned to F4. Use the 't4' command to add an alternate target.\n\n"
+    )
+  end
 end
 
-
 function abutton5()
-	if a5 ~= nil then
-	action = a5
-	cecho("&lt;white&gt;Action set to &lt;steel_blue&gt;"..action.."&lt;white&gt;.\n\n")
-	ActionInput:echo("&lt;center&gt;"..action)
-
-	table.save(PkgPath.."vt.lua", vt)
-else
-	cecho("&lt;white&gt;You do not have an action assigned to F5. Use the 'a5' command to add an alternate action.\n\n")
-	end
+  if a5 ~= nil then
+    action = a5
+    cecho("&lt;white&gt;Action set to &lt;steel_blue&gt;" .. action .. "&lt;white&gt;.\n\n")
+    ActionInput:echo("&lt;center&gt;" .. action)
+    table.save(PkgPath .. "vt.lua", vt)
+  else
+    cecho(
+      "&lt;white&gt;You do not have an action assigned to F5. Use the 'a5' command to add an alternate action.\n\n"
+    )
+  end
 end
 
 function abutton6()
-	if a6 ~= nil then
-	action = a6
-	cecho("&lt;white&gt;Action set to &lt;steel_blue&gt;"..action.."&lt;white&gt;.\n\n")
-	ActionInput:echo("&lt;center&gt;"..action)
-
-	table.save(PkgPath.."vt.lua", vt)
-else
-	cecho("&lt;white&gt;You do not have an action assigned to F6. Use the 'a6' command to add an alternate action.\n\n")
-	end
+  if a6 ~= nil then
+    action = a6
+    cecho("&lt;white&gt;Action set to &lt;steel_blue&gt;" .. action .. "&lt;white&gt;.\n\n")
+    ActionInput:echo("&lt;center&gt;" .. action)
+    table.save(PkgPath .. "vt.lua", vt)
+  else
+    cecho(
+      "&lt;white&gt;You do not have an action assigned to F6. Use the 'a6' command to add an alternate action.\n\n"
+    )
+  end
 end
 
 function abutton7()
-	if a7 ~= nil then
-	action = a7
-	cecho("&lt;white&gt;Action set to &lt;steel_blue&gt;"..action.."&lt;white&gt;.\n\n")
-	ActionInput:echo("&lt;center&gt;"..action)
-
-	table.save(PkgPath.."vt.lua", vt)
-else
-	cecho("&lt;white&gt;You do not have an action assigned to F7. Use the 'a7' command to add an alternate action.\n\n")
-	end
+  if a7 ~= nil then
+    action = a7
+    cecho("&lt;white&gt;Action set to &lt;steel_blue&gt;" .. action .. "&lt;white&gt;.\n\n")
+    ActionInput:echo("&lt;center&gt;" .. action)
+    table.save(PkgPath .. "vt.lua", vt)
+  else
+    cecho(
+      "&lt;white&gt;You do not have an action assigned to F7. Use the 'a7' command to add an alternate action.\n\n"
+    )
+  end
 end
 
-
 buttons.Icon9:echo("&lt;center&gt;Wiki Maps")
-
 buttons.Icon9:setClickCallback("wiki_maps_button")
+
 function wiki_maps_button()
-	openWebPage("http://wiki.qhcf.net/index.php?title=WorldMap")
+  openWebPage("http://wiki.qhcf.net/index.php?title=WorldMap")
 end
 
 buttons.Icon10:echo("&lt;center&gt;Homepage")
 buttons.Icon10:setClickCallback("homepage_button")
 
 function homepage_button()
-	openWebPage("http://www.carrionfields.net")
+  openWebPage("http://www.carrionfields.net")
 end
 
 buttons.Icon11:echo("&lt;center&gt;Logs")
 buttons.Icon11:setClickCallback("logs_button")
+
 function logs_button()
-  openWebPage("file:///"..getMudletHomeDir().."/log/")
+  openWebPage("file:///" .. getMudletHomeDir() .. "/log/")
 end
 
 buttons.Icon12:echo("&lt;center&gt;Navigator")
@@ -6983,6 +7015,12 @@ function winMenuUpdate()
   gearSelect:setFontSize(12)
   gearSelect:echo("&lt;center&gt;Gear")
   gearSelect:setClickCallback("openCon", gearCon)
+  inventorySelect =
+    Geyser.Label:new({name = "inventorySelect", x = 0, y = 0, width = "100%", height = "100%"}, winVBox)
+  inventorySelect:setStyleSheet(selectStyle)
+  inventorySelect:setFontSize(12)
+  inventorySelect:echo("&lt;center&gt;Inventory")
+  inventorySelect:setClickCallback("openCon", inventoryCon)
   if class == "conjurer" then
     enableTrigger("Familiar Window")
     familiarboxcheck = false
@@ -6994,14 +7032,14 @@ function winMenuUpdate()
     famSelect:setClickCallback("openCon", famCon)
     familiarWindow()
   end
-  calendarSelect =
-    Geyser.Label:new(
-      {name = "calendarSelect", x = 0, y = 0, width = "100%", height = "100%"}, winVBox
-    )
-  calendarSelect:setStyleSheet(selectStyle)
-  calendarSelect:setFontSize(12)
-  calendarSelect:echo("&lt;center&gt;Event Calendar")
-  calendarSelect:setClickCallback("openCon", calendarCon)
+--  calendarSelect =
+--    Geyser.Label:new(
+--      {name = "calendarSelect", x = 0, y = 0, width = "100%", height = "100%"}, winVBox
+--    )
+--  calendarSelect:setStyleSheet(selectStyle)
+--  calendarSelect:setFontSize(12)
+--  calendarSelect:echo("&lt;center&gt;Event Calendar")
+--  calendarSelect:setClickCallback("openCon", calendarCon)
   mapSelect =
     Geyser.Label:new({name = "mapSelect", x = 0, y = 0, width = "100%", height = "100%"}, winVBox)
   mapSelect:setStyleSheet(selectStyle)
@@ -7035,33 +7073,23 @@ function winMenuUpdate()
   formatSelect:echo("&lt;center&gt;Formatter")
   formatSelect:setClickCallback("openWebPage", "file:///"..PkgPath.."CFGUI/formatter.html")
 
-
-  --statSelect = Geyser.Label:new({
-  --name = "statSelect",
-  --x = 0, y = 0,
-  --width = "100%",
-  --height = "100%",
-  --},winVBox)
-  --statSelect:setStyleSheet(selectStyle)
-  --statSelect:setFontSize(12)
-  --statSelect:echo("&lt;center&gt;Status")
-  --statSelect:setClickCallback("openCon", charStatusCon)
-  --formatSelect = Geyser.Label:new({
-  --name = "formatSelect",
-  --x = 0, y = 0,
-  --width = "100%",
-  --height = "100%",
-  --},winVBox)
-  --formatSelect:setStyleSheet(selectStyle)
-  --formatSelect:setFontSize(12)
-  --formatSelect:echo("&lt;center&gt;Formatter")
-  --formatSelect:setClickCallback("openCon", formatCon)
+  if update_delayed == true then
+    updateSelect =
+    Geyser.Label:new(
+      {name = "updateSelect", x = 0, y = 0, width = "100%", height = "100%"}, winVBox
+    )
+    updateSelect:setStyleSheet(selectStyle)
+    updateSelect:setFontSize(12)
+    updateSelect:echo("&lt;center&gt;UPDATE")
+    updateSelect:setClickCallback("openCon", updateCon)  
+  end
+      
   helpSelect =
     Geyser.Label:new({name = "helpSelect", x = 0, y = 0, width = "100%", height = "100%"}, winVBox)
   helpSelect:setStyleSheet(selectStyleBottom)
   helpSelect:setFontSize(12)
   helpSelect:echo("&lt;center&gt;Help")
-  helpSelect:setClickCallback("help_menu")
+  helpSelect:setClickCallback("guiHelp")
 end
 
 winMenuUpdate()</script>
@@ -7069,89 +7097,120 @@ winMenuUpdate()</script>
 				<Script isActive="yes" isFolder="no">
 					<name>Aliases and Variables</name>
 					<packageName></packageName>
-					<script>AliasConsole = Geyser.MiniConsole:new({ 
-name = 'AliasConsole',
-x="2%", y="3%",
-width="54%",height="95%",
-autoWrap = true, 
-scrollBar = true,
-fontSize = console_fontsize["Aliases"],
-}, aliasWindowCon)
-AliasConsole:setColor("black") -- background
-
-VariableConsole = Geyser.MiniConsole:new({ 
-name = 'VariableConsole',
-x="60%", y="3%",
-width = "38%", height = "95%",
-autoWrap = true, 
-scrollBar = true,
-fontSize = console_fontsize["Variables"],
-}, aliasWindowCon)
-VariableConsole:setColor("black") -- background
-
+					<script>AliasConsole =
+  Geyser.MiniConsole:new(
+    {
+      name = 'AliasConsole',
+      x = "2%",
+      y = "3%",
+      width = "54%",
+      height = "95%",
+      autoWrap = true,
+      scrollBar = true,
+      fontSize = console_fontsize["Aliases"],
+    },
+    aliasWindowCon
+  )
+AliasConsole:setColor("black")
+-- background
+VariableConsole =
+  Geyser.MiniConsole:new(
+    {
+      name = 'VariableConsole',
+      x = "60%",
+      y = "3%",
+      width = "38%",
+      height = "95%",
+      autoWrap = true,
+      scrollBar = true,
+      fontSize = console_fontsize["Variables"],
+    },
+    aliasWindowCon
+  )
+VariableConsole:setColor("black")
+-- background
 if getAvailableFonts()["Cascadia Mono"] then
   setFont("AliasConsole", "Cascadia Mono")
-  setFont("VariableConsole", "Cascadia Mono")  
+  setFont("VariableConsole", "Cascadia Mono")
 end
-
 updateAliasConsole()
 updateVariableConsole()
 aliasWindowCon:hide()</script>
 					<eventHandlerList />
 				</Script>
 				<Script isActive="yes" isFolder="no">
-					<name>Gear</name>
+					<name>Gear and Inventory Consoles</name>
 					<packageName></packageName>
-					<script>EquipmentConsole = Geyser.MiniConsole:new({
-name = 'EquipmentConsole', 
-x="2%",y="3%",
-width="47%",height="95%",
-autoWrap = true,
-scrollBar = false,
-fontSize = console_fontsize["Equipment"],
-}, gearCon)
+					<script>EquipmentConsole =
+  Geyser.MiniConsole:new(
+    {
+      name = 'EquipmentConsole',
+      x = "2%",
+      y = "3%",
+      width = "95%",
+      height = "95%",
+      autoWrap = true,
+      scrollBar = false,
+      fontSize = console_fontsize["Equipment"],
+    },
+    gearCon
+  )
 clearWindow("EquipmentConsole")
-EquipmentConsole:setColor("black") -- background
+EquipmentConsole:setColor("black")
+-- background
+EquipmentConsole:cecho(
+  '\n\n&lt;steel_blue&gt;Use the &lt;white&gt;EQUIPMENT &lt;steel_blue&gt;command to refresh this window.'
+)
 
-EquipmentConsole:cecho('\n\n&lt;steel_blue&gt;Use the &lt;white&gt;EQUIPMENT &lt;steel_blue&gt;command to refresh this window.')
-
-InventoryConsole = Geyser.MiniConsole:new({
-name = 'InventoryConsole', 
-x="50%",y="3%",
-width="48%",height="95%",
-autoWrap = true,
-scrollBar = true,
-fontSize = console_fontsize["Inventory"],
-}, gearCon)
+InventoryConsole =
+  Geyser.MiniConsole:new(
+    {
+      name = 'InventoryConsole',
+      x = "2%",
+      y = "3%",
+      width = "95%",
+      height = "95%",
+      autoWrap = true,
+      scrollBar = true,
+      fontSize = console_fontsize["Inventory"],
+    },
+    inventoryCon
+  )
 clearWindow("InventoryConsole")
-InventoryConsole:setColor("black") -- background
-InventoryConsole:cecho('\n\n&lt;steel_blue&gt;Use the &lt;white&gt;INVENTORY &lt;steel_blue&gt;command to refresh this window.')
-
+InventoryConsole:setColor("black")
+-- background
+InventoryConsole:cecho(
+  '\n\n&lt;steel_blue&gt;Use the &lt;white&gt;INVENTORY &lt;steel_blue&gt;command to refresh this window.'
+)
 if getAvailableFonts()["Cascadia Mono"] then
   setFont("EquipmentConsole", "Cascadia Mono")
   setFont("InventoryConsole", "Cascadia Mono")
 end
-
 gearCon:hide()</script>
 					<eventHandlerList />
 				</Script>
 				<Script isActive="yes" isFolder="no">
 					<name>Affects Window</name>
 					<packageName></packageName>
-					<script>AffectConsole = Geyser.MiniConsole:new({ 
-name = 'AffectConsole',
-x="3%", y="3%",
-width = "95%", height = "95%",
-autoWrap = true,
-scrollBar=true, 
-fontSize = console_fontsize["Affects"],
-}, affectsCon)
-AffectConsole:setColor("black") -- background
-
+					<script>AffectConsole =
+  Geyser.MiniConsole:new(
+    {
+      name = 'AffectConsole',
+      x = "3%",
+      y = "3%",
+      width = "95%",
+      height = "95%",
+      autoWrap = true,
+      scrollBar = true,
+      fontSize = console_fontsize["Affects"],
+    },
+    affectsCon
+  )
+AffectConsole:setColor("black")
+-- background
 if getAvailableFonts()["Cascadia Mono"] then
   setFont("AffectConsole", "Cascadia Mono")
 end
-
 affectsCon:hide()</script>
 					<eventHandlerList />
 				</Script>
@@ -7392,88 +7451,100 @@ charStatusCon:hide()</script>
 				<Script isActive="yes" isFolder="no">
 					<name>Event Calendar</name>
 					<packageName></packageName>
-					<script>
-CalendarConsole = Geyser.MiniConsole:new({ 
-name = '`',
-x="3%", y="3%",
-width = "95%", height = "95%",
-autoWrap = true,
-scrollBar= true, 
-fontSize = console_fontsize["Calendar"],
-}, calendarCon)
-CalendarConsole:setColor("black") -- background
-
+					<script>CalendarConsole =
+  Geyser.MiniConsole:new(
+    {
+      name = '`',
+      x = "3%",
+      y = "3%",
+      width = "95%",
+      height = "95%",
+      autoWrap = true,
+      scrollBar = true,
+      fontSize = console_fontsize["Calendar"],
+    },
+    calendarCon
+  )
+CalendarConsole:setColor("black")
+-- background
 if getAvailableFonts()["Cascadia Mono"] then
   setFont("CalendarConsole", "Cascadia Mono")
-end
-</script>
+end</script>
 					<eventHandlerList />
 				</Script>
 				<Script isActive="yes" isFolder="no">
 					<name>Item Journal</name>
 					<packageName></packageName>
-					<script>JournalConsole = Geyser.MiniConsole:new({ 
-name = 'JournalConsole',
-x="3%", y="3%",
-width = "95%", height = "95%",
-autoWrap = true,
-scrollBar=true, 
-fontSize = console_fontsize["Journal"],
-}, journalCon)
-JournalConsole:setColor("black") -- background
+					<script>JournalConsole =
+  Geyser.MiniConsole:new(
+    {
+      name = 'JournalConsole',
+      x = "3%",
+      y = "3%",
+      width = "95%",
+      height = "95%",
+      autoWrap = true,
+      scrollBar = true,
+      fontSize = console_fontsize["Journal"],
+    },
+    journalCon
+  )
+JournalConsole:setColor("black")
+-- background
 JournalConsole:enableCommandLine()
+
 local function journalCmd(text)
   listJournal(text, "JournalConsole")
 end
+
 JournalConsole:setCmdAction(journalCmd)
-JournalConsole:setCmdLineStyleSheet([[
+JournalConsole:setCmdLineStyleSheet(
+  [[
 QPlainTextEdit{ /* QPlainTextEdit is used to prevent the styleSheet bleeding to the right click menu*/
       
       background-color: rgb(50,0,50); /* Command line background color */
       font: bold 10pt;          /* Font and font-size of your command line */
       color: rgb(200,200,200);              /* Command line text color */
 }
-]])
-
+]]
+)
 if getAvailableFonts()["Cascadia Mono"] then
   setFont("JournalConsole", "Cascadia Mono")
 end
-
 clearWindow("JournalConsole")
-
-JournalConsole:cecho([[
-Enter the item number to view an item's details.
-Enter a keyword (material, item type, name, etc.) to research.
-Return on a blank line to display all items and numbers.
-&lt;number&gt; note &lt;text&gt; to add a note to a journal entry.
-Use remove &lt;number&gt; to remove an entry.
-]])
-
+listJournal("", "JournalConsole")
 journalCon:hide()</script>
 					<eventHandlerList />
 				</Script>
 				<Script isActive="yes" isFolder="no">
 					<name>Formatter</name>
 					<packageName></packageName>
-					<script>FormatterConsole = Geyser.MiniConsole:new({ 
-name = 'FormatterConsole',
-x="3%", y="3%",
-width = "95%", height = "95%",
-autoWrap = true,
-scrollBar=true, 
-fontSize = console_fontsize["Formatter"],
-}, formatCon)
-FormatterConsole:setColor("black") -- background
+					<script>FormatterConsole =
+  Geyser.MiniConsole:new(
+    {
+      name = 'FormatterConsole',
+      x = "3%",
+      y = "3%",
+      width = "95%",
+      height = "95%",
+      autoWrap = true,
+      scrollBar = true,
+      fontSize = console_fontsize["Formatter"],
+    },
+    formatCon
+  )
+FormatterConsole:setColor("black")
+-- background
 FormatterConsole:enableCommandLine()
+
 local function formatterCmd(text)
   --cformat(text)
 end
-FormatterConsole:setCmdAction(formatterCmd)
 
+FormatterConsole:setCmdAction(formatterCmd)
 if getAvailableFonts()["Cascadia Mono"] then
   setFont("FormatterConsole", "Cascadia Mono")
 end
-
 formatCon:hide()</script>
 					<eventHandlerList />
 				</Script>
@@ -7633,9 +7704,28 @@ end</script>
 				<script></script>
 				<eventHandlerList />
 				<Script isActive="yes" isFolder="no">
+					<name>colorCheck</name>
+					<packageName></packageName>
+					<script>function colorCheck(color)
+  if tonumber(color) then return false end
+  local color = color:lower()
+  color = color:gsub("_", "")
+  for color_name, _ in pairs(color_table) do
+    if color_name:lower() == color then
+      return color_name
+    end
+  end
+  return false
+end
+
+</script>
+					<eventHandlerList />
+				</Script>
+				<Script isActive="yes" isFolder="no">
 					<name>Affects</name>
 					<packageName></packageName>
-					<script>function updateAffects(affects)
+					<script>--Last updated 12/16/2021
+function updateAffects(affects)
   clearWindow("AffectConsole")
   clearWindow("AffMonConsole")
   aff_mon_output = {}
@@ -7668,6 +7758,30 @@ end</script>
     else
       gauge = false
     end
+-- Checking to see if the affect is monitored and permanent, active, or about to wear off
+    if aff_monitor == true then
+      if aff_active == "permanent" then
+        afffg = "238,232,170"
+        affbg = "15,35,75"
+        aff_dur_mon = " Indefinite "
+      elseif aff_dur &gt;= 2 then
+        afffg = "238,232,170"
+        affbg = "15,35,75"
+        aff_dur_mon = aff_dur
+      elseif aff_dur &lt; 2 and aff_dur &gt;= 0 then
+        afffg = "238,232,170"
+        affbg = "175,25,0"
+        aff_dur_mon = aff_dur
+      else
+        afffg = "105,105,105"
+        affbg = "0,0,0"
+        aff_dur_mon = "&lt;255,69,0&gt;*&lt;255,255,255&gt; DOWN &lt;255,69,0&gt;*"
+      end
+      local affinsert =
+        {bg = affbg, fg = afffg, message = message, dur_msg = aff_dur_mon, dur = aff_dur, active = aff_active}
+      aff_mon_output[aff_name] = affinsert
+    end
+    
     if gauge == true and aff_active == "permanent" then
       gauge = false
       message = message .. "&lt;white&gt; persists indefinitely.\n"
@@ -7731,32 +7845,11 @@ end</script>
         "Click to monitor",
         true
       )
-
-      if aff_monitor == true then
-        if aff_active == "permanent" then
-          afffg = "238,232,170"
-          affbg = "15,35,75"
-          aff_dur_mon = "&lt;white&gt;Indefinite"
-        elseif aff_dur &gt;= 2 then
-          afffg = "238,232,170"
-          affbg = "15,35,75"
-          aff_dur_mon = aff_dur
-        elseif aff_dur &lt; 2 and aff_dur &gt;= 0 then
-          afffg = "238,232,170"
-          affbg = "175,25,0"
-          aff_dur_mon = aff_dur
-        else
-          afffg = "DimGray"
-          affbg = "black"
-          aff_dur_mon = "&lt;OrangeRed&gt;*&lt;white&gt;DOWN&lt;OrangeRed&gt;*"
-        end
-        local affinsert =
-          {bg = affbg, fg = afffg, message = message, dur_msg = aff_dur_mon, dur = aff_dur, active = aff_active}
-        aff_mon_output[aff_name] = affinsert
-      end
     end
   end
   AffectConsole:cecho("\n&lt;gray&gt;Note: Refresh using &lt;white&gt;AFF&lt;gray&gt; or &lt;white&gt;SCORE&lt;gray&gt;. Click affect to monitor it.")
+
+-- * * * REORDERING ARROWS * * *
 
   for index, aff in ipairs(monitored_affects) do
     --local arrow_color = "70,130,180"
@@ -7770,29 +7863,10 @@ end</script>
       down_arrow_color = "100,100,100:20,20,20"     
     end
 
-    --AffMonConsole:decho("&lt;20,20,20&gt;║")
     AffMonConsole:dechoLink("&lt;"..up_arrow_color.."&gt; ▲ ", [[clickAffectOrder("]]..aff..[[", "-1")]], "Click to move affect up in list", true)
-    --AffMonConsole:decho("&lt;20,20,20&gt;║")
     AffMonConsole:dechoLink("&lt;"..down_arrow_color.."&gt; ▼ ", [[clickAffectOrder("]]..aff..[[", "1")]], "Click to move affect down in list", true)
-    --AffMonConsole:decho("&lt;20,20,20&gt;║")
     
-    if aff_mon_output[aff] and aff_mon_output[aff]["active"] == "active" then  
-      if aff_mon_output[aff]["dur"] &lt; 2 then
-        arrow_color = "255,255,0"
-      end
---  ARROW VERSION
---      AffMonConsole:dechoLink("&lt;"..arrow_color..
---          "&gt;► &lt;"..aff_mon_output[aff]["fg"]..":" ..
---          aff_mon_output[aff]["bg"] .."&gt;"..
---          string.title(aff) ..
---          " &lt;153,50,204&gt;[&lt;255,255,255&gt;" ..
---          aff_mon_output[aff]["dur_msg"] ..
---          "&lt;153,50,204&gt;]                                                                                                    \n",
---        [[clickAffect("]] .. monitored_affects[index] .. [[","]] .. aff_mon_output[aff]["dur"] .. [[")]],
---        "Click to toggle monitoring",
---        true
---        )
---  NO-ARROW VERSION              
+    if aff_mon_output[aff] and (aff_mon_output[aff]["active"] == "active" or aff_mon_output[aff]["active"] == "permanent") then          
       AffMonConsole:dechoLink("&lt;"..aff_mon_output[aff]["fg"]..":" ..
           aff_mon_output[aff]["bg"].."&gt; "..
           string.title(aff) ..
@@ -8147,17 +8221,6 @@ function listVariables()
   cecho(
     "\n&lt;white&gt;@&lt;variable name&gt; &lt;value&gt; &lt;gray&gt;or &lt;white&gt;var &lt;variable name&gt; &lt;value&gt;&lt;gray&gt; to create or change a variable\n&lt;white&gt;@&lt;variable name&gt; remove&lt;gray&gt; to remove a variable.\n&lt;white&gt;variable clear_yes&lt;gray&gt; to clear all variables.\n\n"
   )
-end
-
-function colorCheck(color)
-  local color = color:lower()
-  color = color:gsub("_", "")
-  for color_name, _ in pairs(color_table) do
-    if color_name:lower() == color then
-      return color_name
-    end
-  end
-  return false
 end
 
 function listHighlights()
@@ -8721,70 +8784,10 @@ end</script>
 					<eventHandlerList />
 				</Script>
 				<Script isActive="yes" isFolder="no">
-					<name>GUIHelp</name>
-					<packageName></packageName>
-					<script>function help_menu()
-  cecho(
-    [[
-&lt;gray&gt;Questions related to Carrion Fields can be answered using the in-game &lt;white&gt;HELP&lt;gray&gt; command, or by visiting our forums at &lt;white&gt;forums.carrionfields.com&lt;gray&gt;.
-  
-  ]]
-  )
-  cecho("Enter: &lt;white&gt;guihelp &lt;number&gt;&lt;gray&gt; to learn about a feature.\n\n")
-  cecho("   &lt;dodger_blue&gt;1&lt;gray&gt; - Variables\n")
-  cecho("   &lt;dodger_blue&gt;2&lt;gray&gt; - Highlights\n")
-  cecho("   &lt;dodger_blue&gt;3&lt;gray&gt; - Aliases\n")
-  cecho("   &lt;dodger_blue&gt;4&lt;gray&gt; - The Friends and Enemies System\n")
-  cecho("   &lt;dodger_blue&gt;5&lt;gray&gt; - Gauges and the 'Setprompt' Command\n")
-  cecho("   &lt;dodger_blue&gt;6&lt;gray&gt; - Item Journal\n")
-  cecho("   &lt;dodger_blue&gt;7&lt;gray&gt; - Target Swapping\n")
-  cecho("   &lt;dodger_blue&gt;8&lt;gray&gt; - Logging\n")
-  cecho("   &lt;dodger_blue&gt;9&lt;gray&gt; - Combat Damage Colors\n")
-  cecho("   &lt;dodger_blue&gt;10&lt;gray&gt; - Mapping\n")
-  cecho("   &lt;dodger_blue&gt;11&lt;gray&gt; - Advanced Aliases &amp; Scripting\n")
-  cecho("   &lt;dodger_blue&gt;12&lt;gray&gt; - Useful Utility Commands - &lt;OrangeRed&gt;NEW, Must-Read!\n")
-  cecho("   &lt;dodger_blue&gt;0&lt;gray&gt; - Troubleshooting\n\n")
-  cecho(
-    "&lt;white&gt;Note:&lt;gray&gt; &lt;OrangeRed&gt;*&lt;white&gt;Right-click&lt;OrangeRed&gt;*&lt;gray&gt; the top area in any of the windows or elements on this screen, and you can unlock them, move them, or even close them. If you mess up, &lt;white&gt;guireset&lt;gray&gt; will revert to your previous state. Use &lt;white&gt;guisave&lt;gray&gt; to save the layout once you're satisfied. If you accidentally closed a window, use 'guirestore'.\n\n"
-  )
-  cecho(
-    "&lt;white&gt;To get started quick:&lt;gray&gt; Type &lt;white&gt;alias&lt;gray&gt; to create aliases, &lt;white&gt;var&lt;gray&gt; to create variables.\n\n"
-  )
-end
-
-function helpLinks(htext, hlinktext, hurl, hcaption)
-  cecho("&lt;steel_blue&gt;Helpful Links:&lt;gray&gt;\n\n")
-  cecho("&lt;gray&gt;Chat our friendly immortals and playerbase for help: ")
-  cechoLink(
-    "&lt;dodger_blue&gt;Carrion Fields Discord&lt;gray&gt;\n\n",
-    [[openURL("https://discord.gg/tK8Q5px"]],
-    "Carrion Fields Discord",
-    true
-  )
-  cecho("&lt;gray&gt;For help with the client, visit ")
-  cechoLink(
-    "&lt;dodger_blue&gt;The Mudlet Manual\n\n",
-    [[openWebPage("https://wiki.mudlet.org/w/Manual:Introduction")]],
-    "The Mudlet Manual",
-    true
-  )
-  if htext ~= nil and hlinktext ~= nil and hurl ~= nil and hcaption ~= nil then
-    cecho("&lt;gray&gt;" .. htext .. " ")
-    cechoLink(
-      "&lt;dodger_blue&gt;" .. hlinktext .. "\n\n",
-      [[openWebPage("https://]] .. hurl .. [[")]],
-      hcaption,
-      true
-    )
-  end
-  cecho("&lt;white&gt;Enter 'guihelp' alone to return to the main help menu.\n\n")
-end</script>
-					<eventHandlerList />
-				</Script>
-				<Script isActive="yes" isFolder="no">
 					<name>Autologging</name>
 					<packageName></packageName>
 					<script>function autoLogStart()
+  cecho("&lt;gold&gt;Remember: &lt;reset&gt;Use &lt;white&gt;guihelp&lt;reset&gt; to get to know your client's features.\n\n")
   if autolog then
     cecho("&lt;LightGoldenrod&gt;Automatic logging is &lt;OrangeRed&gt;ON&lt;LightGoldenrod&gt;.  Toggle with &lt;white&gt;autolog&lt;LightGoldenrod&gt;.\n")
     startLogging(true)
@@ -9264,41 +9267,10 @@ Syntax: &lt;white&gt;damcolor &lt;incoming &lt;gray&gt;or&lt;white&gt; outgoing&
 end</script>
 					<eventHandlerList />
 				</Script>
-				<Script isActive="yes" isFolder="no">
-					<name>cfFormat</name>
-					<packageName></packageName>
-					<script>function cfFormat(str)
-   local indent = ""
-   local indent1 = ""
-   local limit = 76
-   local here = 1-#indent1
-   local function check(sp, st, word, fi)
-      if fi - here &gt; limit then
-         here = st - #indent
-         return "\n"..indent..word
-      end
-   end
-   formatted_message = str:gsub("(%s+)()(%S+)()", check)
-   --table.insert(format_table, formatted_message)
-   FormatConsole:echo(formatted_message)
-end
-
-function sendFormat(form)
-  for index, data in ipairs(format_table) do
-    tempTimer(1, [[send("]]..form..[[ + ]]..data..[[")]])
-  end
-end</script>
-					<eventHandlerList />
-				</Script>
-				<Script isActive="yes" isFolder="no">
+				<Script isActive="no" isFolder="no">
 					<name>Calendar</name>
 					<packageName></packageName>
-					<script>function getCalendar()
-  local filename = getMudletHomeDir() .. "/calendar.json"
-  downloadFile(filename, cfCalendar)
-end
-
-function parseCalendar(a, filename)
+					<script>function parseCalendar(a, filename)
   if not filename:find("calendar.json", 1, true) then
     return
   end
@@ -9348,13 +9320,10 @@ function parseCalendar(a, filename)
     )
     CalendarConsole:cecho("&lt;DarkOrchid&gt;-----------------------------------------------\n\n")
   end
-end
-
-registerAnonymousEventHandler("sysConnectionEvent", "getCalendar")
-registerAnonymousEventHandler("sysDownloadDone", "parseCalendar")
-
-</script>
-					<eventHandlerList />
+end</script>
+					<eventHandlerList>
+						<string>sysDownloadDone</string>
+					</eventHandlerList>
 				</Script>
 				<Script isActive="yes" isFolder="no">
 					<name>Fontsize</name>
@@ -9446,32 +9415,197 @@ end</script>
 					<eventHandlerList />
 				</Script>
 				<Script isActive="yes" isFolder="no">
-					<name>Item Journal Parsing</name>
+					<name>Item Journal</name>
 					<packageName></packageName>
-					<script>function listJournal(arg, window)
+					<script>--Last updated: 1/25/22
+--Updated search function with failure message, also fixing other bugs
+
+function listJournal(arg, window)
   local id_matches = {}
+  local syntax_message = ""
+  local syntax_cmd = ""
+  --local follow_message = ""
   if window == nil then
     window = "main"
-    cecho(window, "&lt;LightGoldenrod&gt;You open your item journal...\n")
+    cecho(window, "&lt;PaleGoldenrod&gt;You open your item journal...\n")
   end
+  if window == "main" then
+    syntax_cmd = "&lt;white&gt;journal "
+  else
+    syntax_cmd = ""
+  end
+  syntax_message =
+      [[
+            
+&lt;MediumOrchid&gt; &gt; ]]..syntax_cmd..[[&lt;steel_blue&gt;&lt;&lt;white&gt;keyword&lt;steel_blue&gt;&lt;LightGoldenrod&gt; to search by material, item type, name, or phrase
+&lt;MediumOrchid&gt; &gt; ]]..syntax_cmd..[[&lt;steel_blue&gt;&lt;&lt;white&gt;number&lt;steel_blue&gt;&gt;&lt;LightGoldenrod&gt; to see entry
+&lt;MediumOrchid&gt; &gt; ]]..syntax_cmd..[[&lt;steel_blue&gt;&lt;&lt;white&gt;number&lt;steel_blue&gt;&gt;&lt;white&gt; note &lt;steel_blue&gt;&lt;&lt;white&gt;text&lt;steel_blue&gt;&gt; &lt;LightGoldenrod&gt;to add note to entry
+&lt;MediumOrchid&gt; &gt; ]]..syntax_cmd..[[&lt;steel_blue&gt;&lt;&lt;white&gt;number&lt;steel_blue&gt;&gt;&lt;white&gt; tag &lt;steel_blue&gt;[&lt;white&gt;optional color&lt;steel_blue&gt;] &lt;steel_blue&gt;&lt;&lt;white&gt;text&lt;steel_blue&gt;&gt; &lt;LightGoldenrod&gt;to add special tag to item
+&lt;MediumOrchid&gt; &gt; ]]..syntax_cmd..[[&lt;white&gt;remove &lt;steel_blue&gt;&lt;&lt;white&gt;number&lt;steel_blue&gt;&gt; &lt;LightGoldenrod&gt;to remove entry
     
-  --Adding a note
-  if string.match(arg, "%d+ note .+")then
-    local journal_number = tonumber(string.match(arg, "(%d+) note .+"))
-    if journal_number == 0 or journal_number &gt; #id_table then
-      return cecho(window, "&lt;LightGoldenrod&gt;...but try to remove a page number that doesn't exist!\n\n")
-    end
-    local journal_note = string.match(arg, "%d+ note (.+)")
-    id_table[journal_number]["note"] = journal_note
-    cecho(window, "&lt;LightGoldenrod&gt;...and you add a note to your entry on &lt;violet&gt;" .. id_table[journal_number]["name"].."&lt;LightGoldenrod&gt;.\n\n")
-    return
-  end   
+]]
+  --If it's blank or "all" we list up to 90 entries
+  if arg == "all" or arg == nil or arg == "" then
+    counter = 0
+    for index, _ in ipairs(id_table) do
+      local tag_marker = ""
+      local note_marker = ""
+      local entry_color = "&lt;gray&gt;"
+      if id_table[index]["tag"] == nil then
+        id_table[index]["tag"] = ""
+      elseif id_table[index]["tag"] ~= "" then
+        tag_marker =
+          " &lt;white&gt;[ &lt;" ..
+          id_table[index]["tag_color"] ..
+          "&gt;" ..
+          id_table[index]["tag"] ..
+          "&lt;white&gt; ]"
+      end
+      if id_table[index]["note"] == nil then
+        id_table[index]["note"] = ""
+      elseif id_table[index]["note"] ~= "" then
+        note_marker = "&lt;MediumOrchid&gt;*&lt;reset&gt; "
+      end
+      if id_table[index]["id"] == nil then
+        id_table[index]["id"] = ""
+      end
+      if id_table[index]["id"] == "" then
+        entry_color = "&lt;DimGray&gt;"
+      end
+      if counter &gt;= 90 then
+        cecho(
+          window,
+          [[
+          
+&lt;MediumOrchid&gt;You have &lt;white&gt;]] ..
+          #id_table ..
+          [[&lt;MediumOrchid&gt; total entries.
+&lt;MediumOrchid&gt; &gt; &lt;steel_blue&gt;&lt;&lt;white&gt;keyword&lt;steel_blue&gt;&lt;LightGoldenrod&gt; to search the index for a material, item type, name, or other phrase.
 
-  --Removing an entry
-  if string.match(arg, "remove %d+") then
-    journal_number = tonumber(string.match(arg, "remove (%d+)"))
+      
+]]
+        )
+      else
+        local number_spacer = ""
+        if index &lt; 10 then
+          number_spacer = " "
+        end
+        cecho(
+          window,
+          "&lt;DarkGoldenrod&gt;[&lt;PaleGoldenrod&gt;" ..
+          number_spacer ..
+          index ..
+          "&lt;DarkGoldenrod&gt;] " ..
+          entry_color ..
+          note_marker ..
+          id_table[index]["name"] ..
+          tag_marker ..
+          "\n"
+        )
+        counter = counter + 1
+      end
+    end
+    cecho(window, syntax_message)
+    return
+    -- Numeric argument to look up a specific entry
+  elseif tonumber(arg) then
+    arg = tonumber(arg)
+    if arg &gt; #id_table then
+      return
+        cecho(
+          window,
+          "&lt;LightGoldenrod&gt;...but there is no page &lt;violet&gt;" .. arg .. "&lt;LightGoldenrod&gt;!\n\n"
+        )
+    else
+      cecho(
+        window,
+        [[
+
+&lt;DarkGoldenrod&gt;[&lt;white&gt;]] ..
+        arg ..
+        [[&lt;DarkGoldenrod&gt;] &lt;MediumOrchid&gt;]] ..
+        id_table[arg]["name"] ..
+        [[
+
+&lt;PaleGoldenrod&gt;-------------------------------------------------------------------------------
+]]
+      )
+      -- Ensure fields are not nil
+      if id_table[arg]["id"] == nil then
+        id_table[arg]["id"] = ""
+      end
+      if id_table[arg]["note"] == nil then
+        id_table[arg]["note"] = ""
+      end
+      if id_table[arg]["tag"] == nil then
+        id_table[arg]["tag"] = ""
+      end
+      --Print full ID data, or a notification if there is none
+      if id_table[arg]["id"] == "" then
+        cecho(window, "\n&lt;PaleGoldenrod&gt;This item has yet to be identified in your journal.\n\n&lt;PaleGoldenrod&gt;-------------------------------------------------------------------------------\n")
+      else
+        cecho(window, "&lt;PaleGoldenrod&gt;" .. id_table[arg]["id"] .. "\n")
+      end
+      -- Print note
+      if id_table[arg]["note"] == "" then 
+        cecho(window, "\n&lt;DarkGoldenrod&gt;Note: &lt;PaleGoldenrod&gt;---\n\n")
+      else
+        cecho(window, "\n&lt;DarkGoldenrod&gt;Note: &lt;PaleGoldenrod&gt;" .. id_table[arg]["note"] .. "\n\n")
+      end
+      -- Print tag
+      if id_table[arg]["tag"] == "" then 
+        cecho(window, "&lt;DarkGoldenrod&gt;Tag: &lt;white&gt;[ &lt;gray&gt;--- &lt;white&gt;]\n\n")
+      else
+      cecho(
+        window,
+        "&lt;DarkGoldenrod&gt;Tag: &lt;white&gt;[ &lt;" ..
+        id_table[arg]["tag_color"] ..
+        "&gt;" ..
+        id_table[arg]["tag"] ..
+        "&lt;white&gt; ]\n\n"
+      )
+      end
+      -- Print syntax
+      cecho(
+        window,
+        [[
+&lt;MediumOrchid&gt; &gt; ]]..syntax_cmd..[[&lt;steel_blue&gt;]] ..
+        arg ..
+        [[&lt;white&gt; note &lt;steel_blue&gt;&lt;&lt;white&gt;text&lt;steel_blue&gt;&gt; &lt;LightGoldenrod&gt;to add a note.
+&lt;MediumOrchid&gt; &gt; ]]..syntax_cmd..[[&lt;steel_blue&gt;]] ..
+        arg ..
+        [[&lt;white&gt; tag &lt;steel_blue&gt;[&lt;white&gt;optional color&lt;steel_blue&gt;] &lt;steel_blue&gt;&lt;&lt;white&gt;text&lt;steel_blue&gt;&gt; &lt;LightGoldenrod&gt;to add or change a tag.
+&lt;MediumOrchid&gt; &gt; ]]..syntax_cmd..[[&lt;steel_blue&gt;]] ..
+        arg ..
+        [[&lt;white&gt; tag remove&lt;LightGoldenrod&gt; to remove a tag.
+&lt;MediumOrchid&gt; &gt; ]]..syntax_cmd..[[&lt;steel_blue&gt;]] ..
+        arg ..
+        [[&lt;white&gt; remove&lt;LightGoldenrod&gt; to remove this entry.
+]]
+      )
+      return
+    end
+  --Replacing an identification 
+  elseif string.match(arg, "replace") then
+    local replace_page = tonumber(id_replace["page"])
+    local replace_id = id_replace["id"]
+    local replace_keyword = id_replace["keyword"]
+    local replace_name = id_replace["name"]
+    
+    id_table[replace_page]["id"] = replace_id
+    id_table[replace_page]["keyword"] = replace_keyword
+    id_table[replace_page]["name"] = replace_name
+    
+    cecho("&lt;PaleGoldenrod&gt;...and update your entry for &lt;MediumOrchid&gt;"..replace_name.."&lt;PaleGoldenrod&gt; on page &lt;DarkGoldenrod&gt;[&lt;white&gt;"..replace_page.."&lt;DarkGoldenrod&gt;]&lt;PaleGoldenrod&gt;.\n\n")
+    
+    table.save(PkgPath .. "id_table.lua", id_table)
+    return
+    --Removing an entry
+  elseif string.match(arg, "%d+ remove") then
+    journal_number = tonumber(string.match(arg, "(%d+) remove"))
     if journal_number == 0 or journal_number &gt; #id_table then
-      return cecho(window, "&lt;LightGoldenrod&gt;...but try to remove a page number that doesn't exist!\n\n")
+      return
+        cecho(window, "&lt;LightGoldenrod&gt;...but try to remove a page number that doesn't exist!\n\n")
     end
     local removal_name = id_table[journal_number]["name"]
     for index, _ in ipairs(id_table) do
@@ -9484,109 +9618,185 @@ end</script>
         end
       end
     end
-    table.save(getMudletHomeDir() .. "/id_table.lua", id_table)
+    cecho(
+      window,
+      "&lt;PaleGoldenrod&gt;...and you remove the entry for &lt;MediumOrchid&gt;" .. removal_name .. "\n\n"
+    )
+    table.save(PkgPath .. "id_table.lua", id_table)
     return
-      cecho(window, "&lt;PaleGoldenrod&gt;...and you remove the entry for &lt;violet&gt;" .. removal_name .. "\n\n")
-  elseif arg == "all" then
-    counter = 0
-    for index, _ in ipairs(id_table) do
-      if counter &gt;= 25 then
-        return
-          cecho(window, 
-            [[
-        
-&lt;DarkGoldenrod&gt;There too many entries. You may want to search the index for a specific keyword, such as item type, material, or a word from the item's name.
-&lt;LightGoldenrod&gt;Try &lt;white&gt;journal &lt;keyword&gt;
-      
-]]
-          )
-      else
-        cecho(window, 
-          "&lt;DarkGoldenrod&gt;(&lt;PaleGoldenrod&gt;" ..
-          index ..
-          "&lt;DarkGoldenrod&gt;) &lt;gray&gt;" ..
-          id_table[index]["name"] ..
-          "\n"
-        )
-        counter = counter + 1
-      end
-    end
+  elseif
+    string.match(arg, "remove %w+") or
+    string.match(arg, "remove$") or
+    string.match(arg, "remove $") or
+    string.match(arg, "%w+ remove")
+  then
     return
-      cecho(window, 
-        [[
-    
-&lt;LightGoldenrod&gt;Try &lt;white&gt;journal &lt;number&gt;&lt;LightGoldenrod&gt; to read more.
-&lt;white&gt;journal &lt;number&gt; note &lt;text&gt; &lt;LightGoldenrod&gt;to add a note to a journal entry.
-&lt;goldenrod&gt;Use &lt;white&gt;journal remove &lt;number&gt; &lt;goldenrod&gt;to remove an entry.
-&lt;DarkGoldenrod&gt;You can also search the journal's index for a material, item type, name, or other keyword with &lt;white&gt;journal &lt;keyword&gt;
+      cecho(
+        window,
+        [[&lt;LightGoldenrod&gt;...but you need to select a page number to remove an entry!
+
+&lt;MediumOrchid&gt; &gt; ]]..syntax_cmd..[[&lt;steel_blue&gt;&lt;&lt;white&gt;number&lt;steel_blue&gt;&gt; &lt;white&gt;remove &lt;LightGoldenrod&gt;to remove an entry.
 
 ]]
       )
-  elseif tonumber(arg) then
-    arg = tonumber(arg)
-    if arg &lt;= #id_table then
-      cecho(window, 
-        [[&lt;PaleGoldenrod&gt;-------------------------------------------------------------------------------
-]]
-      )
-      
-      cecho(window, "&lt;PaleGoldenrod&gt;" .. id_table[arg]["id"] .. "\n")
-      if id_table[arg]["note"] ~= nil and id_table[arg]["note"] ~= "" then
-        cecho(window, "&lt;DarkGoldenrod&gt;Note: &lt;PaleGoldenrod&gt;".. id_table[arg]["note"].."\n\n")
-        return
-      else
-        cecho(window, "\n")       
-        return
+    --Adding a note
+  elseif string.match(arg, "%d+ note .+") then
+    local journal_number = tonumber(string.match(arg, "(%d+) note .+"))
+    if journal_number == 0 or journal_number &gt; #id_table then
+      return cecho(window, "&lt;LightGoldenrod&gt;...but that page does not exist!\n\n")
+    end
+    local journal_note = string.match(arg, "%d+ note (.+)")
+    id_table[journal_number]["note"] = journal_note
+    cecho(
+      window,
+      "&lt;LightGoldenrod&gt;...and you add a note to your entry on &lt;MediumOrchid&gt;" ..
+      id_table[journal_number]["name"] ..
+      "&lt;LightGoldenrod&gt;.\n\n"
+    )
+    table.save(PkgPath .. "id_table.lua", id_table)
+    return
+  elseif string.match(arg, "%d+ tag .+") then
+    local journal_number = tonumber(string.match(arg, "(%d+) tag .+"))
+    if journal_number == 0 or journal_number &gt; #id_table then
+      return cecho(window, "&lt;LightGoldenrod&gt;...but that page does not exist!\n\n")
+    end
+    --Successful use of "tag" begins here:
+    local journal_tag = ""
+    local tag_arg = {}
+    -- Isolate first word to check if it's "remove" or a color
+    tag_arg = string.split(string.match(arg, "%d+ tag (.+)"), " ")
+    if tag_arg[1] == "remove" then
+      -- Check for tag trigger and kill it
+      if id_table[journal_number]["tag_trigger"] then
+        killTrigger(id_table[journal_number]["tag_trigger"])
       end
-    else
+      id_table[journal_number]["tag"] = ""
+      id_table[journal_number]["tag_color"] = ""
+      id_table[journal_number]["tag_trigger"] = ""
+      cecho(
+        "&lt;LightGoldenrod&gt;...and clear your tag on &lt;MediumOrchid&gt;" ..
+        id_table[journal_number]["name"] ..
+        ".\n\n"
+      )
+      table.save(PkgPath .. "id_table.lua", id_table)
       return
-        cecho(window, 
-          "&lt;LightGoldenrod&gt;...but there is no page &lt;violet&gt;" .. arg .. "&lt;LightGoldenrod&gt;!\n\n"
+    end
+    if colorCheck(tag_arg[1]) then
+      local tag_color = colorCheck(tag_arg[1])
+      -- Remove the color word and clean up the string
+      tag_text = string.match(arg, "%d+ tag (.+)")
+      tag_text = tag_text:gsub(tag_arg[1], "")
+      tag_text = string.trim(tag_text)
+      -- Record the tag data in the item journal and create trigger
+      id_table[journal_number]["tag_color"] = tag_color
+      id_table[journal_number]["tag"] = tag_text
+      -- Check for pre-existing tag trigger and kill it
+      if id_table[journal_number]["tag_trigger"] then
+        killTrigger(id_table[journal_number]["tag_trigger"])
+      end
+      -- Create new tag trigger
+      id_table[journal_number]["tag_trigger"] =
+        tempTrigger(
+          id_table[journal_number]["name"],
+          function()
+            cecho(
+              " &lt;LightGoldenrod&gt;[ &lt;" .. tag_color .. "&gt;" .. tag_text .. "&lt;LightGoldenrod&gt; ]&lt;reset&gt;"
+            )
+          end
         )
+      table.save(PkgPath .. "id_table.lua", id_table)
+      cecho(
+        window,
+        "&lt;LightGoldenrod&gt;...and you add a tag to your entry on &lt;MediumOrchid&gt;" ..
+        id_table[journal_number]["name"] ..
+        "&lt;LightGoldenrod&gt;:\n\n"
+      )
+      cecho(
+        window,
+        "&lt;white&gt;[&lt;" ..
+        id_table[journal_number]["tag_color"] ..
+        "&gt; " ..
+        id_table[journal_number]["tag"] ..
+        "&lt;white&gt; ]\n\n"
+      )
+      return
+    else
+      id_table[journal_number]["tag_color"] = "reset"
+      journal_tag = string.match(arg, "%d+ tag (.+)")
+      id_table[journal_number]["tag"] = journal_tag
+      cecho(
+        window,
+        "&lt;LightGoldenrod&gt;...and you tag &lt;MediumOrchid&gt;" ..
+        id_table[journal_number]["name"] ..
+        "&lt;LightGoldenrod&gt;.\n\n"
+      )
+      table.save(PkgPath .. "id_table.lua", id_table)
+      cecho(
+        window,
+        "&lt;LightGoldenrod&gt;...and you add a tag to your entry on &lt;MediumOrchid&gt;" ..
+        id_table[journal_number]["name"] ..
+        "&lt;LightGoldenrod&gt;:\n\n"
+      )
+      cecho(
+        window,
+        "&lt;white&gt;[&lt;" ..
+        id_table[journal_number]["tag_color"] ..
+        "&gt; " ..
+        id_table[journal_number]["tag"] ..
+        "&lt;white&gt; ]\n\n"
+      )
+      return
     end
   else
     --Search
+    cecho(
+      window,
+      "&lt;LightGoldenrod&gt;...and search for entries containing '&lt;MediumOrchid&gt;" ..
+      arg ..
+      "&lt;LightGoldenrod&gt;'.&lt;reset&gt;\n\n"
+    )
+    --Search loop
+    local journal_search_match = false
     for index, _ in ipairs(id_table) do
       if string.match(id_table[index]["id"], arg) then
-        cecho(window, 
-          "&lt;DarkGoldenrod&gt;(&lt;LightGoldenrod&gt;" ..
+        journal_search_match = true
+        cecho(
+          window,
+          "&lt;DarkGoldenrod&gt;[&lt;LightGoldenrod&gt;" ..
           index ..
-          "&lt;DarkGoldenrod&gt;) &lt;gray&gt;" ..
+          "&lt;DarkGoldenrod&gt;] &lt;gray&gt;" ..
           id_table[index]["name"] ..
           "\n"
         )
       end
     end
+    if not journal_search_match then
+      cecho(window, "&lt;gray&gt;Alas, you are unable to find any mention of it.\n")
+    end
   end
-  
   if window == "main" then
-    cecho(window, 
-    [[
+    cecho(
+      window,
+      [[
   
-&lt;LightGoldenrod&gt;journal &lt;number&gt; to read more.
-&lt;DarkGoldenrod&gt;You can also search the journal's index for a material, item type, name, or other keyword with &lt;white&gt;journal &lt;keyword&gt;
-  
+&lt;MediumOrchid&gt; &gt; &lt;white&gt;journal &lt;steel_blue&gt;&lt;&lt;white&gt;number&lt;steel_blue&gt;&gt;&lt;LightGoldenrod&gt; to read more.
+&lt;MediumOrchid&gt; &gt; &lt;white&gt;journal &lt;steel_blue&gt;&lt;&lt;white&gt;keyword&lt;steel_blue&gt;&lt;LightGoldenrod&gt; to search the index for a material, item type, name, or other phrase.  
 ]]
-  )
+    )
   else
-    cecho(window, 
-    [[  
-&lt;LightGoldenrod&gt;Enter the item number to view an item's details.
-&lt;goldenrod&gt;Enter a keyword (material, item type, name, etc.) to research.
-&lt;DarkGoldenrod&gt;Return on a blank line to display all items and numbers.
-&lt;white&gt;&lt;number&gt; note &lt;text&gt; &lt;LightGoldenrod&gt;to add a note to a journal entry.
-&lt;goldenrod&gt;Use &lt;white&gt;remove &lt;number&gt; &lt;LightGoldenrod&gt;to remove an entry.
+    cecho(
+      window,
+      [[  
+&lt;MediumOrchid&gt; &gt; &lt;LightGoldenrod&gt;Enter item number to view details.
+&lt;MediumOrchid&gt; &gt; &lt;goldenrod&gt;Enter keyword (item material, type, name, etc.) to research.
+&lt;MediumOrchid&gt; &gt; &lt;white&gt;&lt;number&gt; note &lt;text&gt; &lt;LightGoldenrod&gt;to add a note to a journal entry.
+&lt;MediumOrchid&gt; &gt; &lt;white&gt;&lt;number&gt; tag &lt;text&gt; &lt;LightGoldenrod&gt;to add a tag to a journal entry.
+&lt;MediumOrchid&gt; &gt; &lt;goldenrod&gt;Use &lt;white&gt;remove &lt;number&gt; &lt;LightGoldenrod&gt;to remove an entry.
   
 ]]
-  )
+    )
   end
 end</script>
-					<eventHandlerList />
-				</Script>
-				<Script isActive="yes" isFolder="no">
-					<name>Format</name>
-					<packageName></packageName>
-					<script></script>
 					<eventHandlerList />
 				</Script>
 				<Script isActive="no" isFolder="no">
@@ -9625,44 +9835,7 @@ end</script>
 				<Script isActive="yes" isFolder="no">
 					<name>Time</name>
 					<packageName></packageName>
-					<script>-- Check for new hour
-function checkTime(time, time_old)
-  if not time then
-    time_old = time
-  else
-    local firsttime = true
-    displayTime()
-  end
-  
-  if firsttime == true and time_old == nil then
-    time_old = time
-    firsttime = false
-  end
-  
-  if time_old ~= nil and time ~= time_old then
-  --	echo("Time has changed.")
-    if time &lt; time_old then
-      timediff = ((time - time_old) + 24)
-      -- formula for calculating time difference across midnight
-    else
-      timediff = time - time_old
-    end
-  end
-  
--- Update affects monitors using the time difference
-  
-  if affects ~= nil then
-    for affect, _ in ipairs(affects) do
-      if tonumber(affects[affect][5]) then
-        affects[affect][5] = (affects[affect][5] - timediff)
-      end
-    end
-  end
-  updateAffects(affects)
-  terrainUpdate()
-end
-
--- Update time gauge
+					<script>-- Update time gauge
 function displayTime()
   local timeofday = nil
   if time &gt; 18 or time &lt; 6 then
@@ -9678,6 +9851,479 @@ function displayTime()
   GameTime:setValue(time, 24, "&lt;center&gt;" .. time .. ":00 (" .. timeofday .. ")")
 end
 </script>
+					<eventHandlerList />
+				</Script>
+				<Script isActive="yes" isFolder="no">
+					<name>guiHelp</name>
+					<packageName></packageName>
+					<script>--Updated 2/16/2021
+function guiHelp(helpselect)
+  if helpselect == nil then
+    helpselect = "menu"
+  end
+  
+  if helpselect == '1' or helpselect == 'variables' then
+  cecho(
+    [[
+&lt;white&gt;Variables&lt;gray&gt;
+
+Syntax: &lt;white&gt;var &lt;steel_blue&gt;&lt;variable name&gt; &lt;value&gt; &lt;gray&gt;
+        &lt;white&gt;var&lt;gray&gt; to see and manage existing variables
+
+&lt;PaleGoldenrod&gt;Variables &lt;gray&gt;are special words that can be set to stand for another for use in &lt;PaleGoldenrod&gt;aliases &lt;gray&gt;(which are detailed in guihelp 2).  For example, you might set the variable @food to 'chicken', or @target to the name of the person you're trying to kill.  This makes your aliases more flexible and multifunctional.
+
+Some of the variables are "default variables," which are recommended and used throughout your interface.  In the bar at the bottom of your screen, you will see six boxes labeled &lt;white&gt;Target, Action, Ally, Aid, Mainhand, &lt;gray&gt;and&lt;white&gt; Offhand.&lt;gray&gt; These are important variables to set, so they're listed in a place where you can always see them.  On the right side of your screen, there is also an alias and variable window, which displays all of your set aliases and variables for your convenience.
+
+If one of your variables refers to an item, we recommend that you use the in-game &lt;white&gt;KEYWORD&lt;gray&gt; command and copy all of the keywords, encased in single-quotes (example: 'whole chicken') into your variable to avoid accidentally using the wrong item.
+
+]]
+  )
+elseif helpselect == '2' or helpselect == 'highlights' then
+  cecho(
+    [[
+&lt;white&gt;Highlights&lt;gray&gt;
+
+Syntax: &lt;white&gt;high &lt;color&gt; &lt;text&gt;
+        &lt;white&gt;high&lt;gray&gt; to see and manage existing highlights
+
+&lt;PaleGoldenrod&gt;Highlights &lt;gray&gt;change the color of certain words or phrases.  This can make it easier to see when important affects fall, or if you walk into a room with a "chest" in the description, for example.
+
+For a full list of colors, use the &lt;white&gt;showcolors&lt;gray&gt; command.
+
+]]
+  )
+  helpLinks()
+elseif helpselect == '3' or helpselect == 'alias' then
+  cecho(
+    [[
+&lt;white&gt;Aliases&lt;gray&gt;
+  
+&lt;gray&gt;Syntax: &lt;white&gt;alias &lt;pattern&gt; &lt;full command&gt; &lt;gray&gt;to create or modify an alias
+        &lt;white&gt;alias&lt;gray&gt; to see and manage existing aliases
+        &lt;white&gt;alias remove &lt;pattern&gt; &lt;gray&gt;to delete a single alias
+        &lt;white&gt;alias clear_yes &lt;gray&gt;to delete all aliases
+        &lt;gray&gt;Special characters: &lt;MediumSeaGreen&gt;#&lt;white&gt; = &lt;gray&gt;Your input, &lt;steel_blue&gt;@&lt;white&gt; = &lt;gray&gt;Variable, &lt;OrangeRed&gt;;&lt;white&gt; = &lt;gray&gt;Split
+        
+&lt;PaleGoldenrod&gt;Aliases&lt;gray&gt; are like shortcuts that allow you to enter a complex command by just typing a few letters.  You can make your own using the &lt;white&gt;alias&lt;gray&gt; command, and you can even throw in &lt;PaleGoldenrod&gt;variables&lt;gray&gt; you create using the &lt;white&gt;var&lt;gray&gt; command.&lt;gray&gt;
+
+Examples:
+&lt;violet&gt;alias heal co 'heal'
+&lt;white&gt;Input:      &lt;PaleGoldenrod&gt;Output:
+&lt;white&gt;heal     &lt;OrangeRed&gt;-&gt; &lt;PaleGoldenrod&gt;co 'heal'
+&lt;white&gt;heal pal &lt;OrangeRed&gt;-&gt; &lt;PaleGoldenrod&gt;co 'heal' pal
+
+&lt;violet&gt;alias bt bash &lt;steel_blue&gt;@&lt;pale_goldenrod&gt;target
+&lt;gray&gt;Set @target or any other variable with the &lt;white&gt;variable&lt;gray&gt; command (i.e. &lt;white&gt;var @target Joe&lt;gray&gt;). If you enter something else after 'bt', your command will replace the @target.
+
+&lt;white&gt;Input:       &lt;PaleGoldenrod&gt;Output:
+&lt;white&gt;bt        &lt;OrangeRed&gt;-&gt; &lt;PaleGoldenrod&gt;bash Joe
+&lt;white&gt;bt giant  &lt;OrangeRed&gt;-&gt; &lt;PaleGoldenrod&gt;bash giant
+
+&lt;violet&gt;alias aa &lt;steel_blue&gt;@&lt;pale_goldenrod&gt;action &lt;steel_blue&gt;@&lt;pale_goldenrod&gt;target
+&lt;gray&gt;(If we set &lt;steel_blue&gt;@&lt;pale_goldenrod&gt;action&lt;gray&gt; to "trip" using: &lt;white&gt;var @action trip&lt;gray&gt;)
+&lt;white&gt;Input:       &lt;PaleGoldenrod&gt;Output:
+&lt;white&gt;aa        &lt;OrangeRed&gt;-&gt; &lt;PaleGoldenrod&gt;trip Joe
+&lt;white&gt;aa giant  &lt;OrangeRed&gt;-&gt; &lt;PaleGoldenrod&gt;trip giant
+
+&lt;violet&gt;alias gc get &lt;MediumSeaGreen&gt;# &lt;steel_blue&gt;@&lt;pale_goldenrod&gt;container&lt;OrangeRed&gt;;&lt;violet&gt;eat &lt;MediumSeaGreen&gt;#
+&lt;gray&gt;The # character translates into whatever you enter after the pattern. The ; character splits your alias into multiple commands. So, if @container = "knapsack"...
+&lt;white&gt;Input:            &lt;PaleGoldenrod&gt;Output:
+&lt;white&gt;gc bread       &lt;OrangeRed&gt;-&gt; &lt;PaleGoldenrod&gt;get bread knapsack
+                  eat bread
+                  
+&lt;OrangeRed&gt;Need more help?  Ask on ]]
+  )
+  cechoLink(
+    "&lt;DodgerBlue&gt;The Carrion Fields Official Discord channel!",
+    [[openURL("https://discord.gg/tK8Q5px"]],
+    "Carrion Fields Official Discord",
+    true
+  )
+elseif helpselect == '4' then
+  cecho(
+    [[
+&lt;white&gt;The Friends and Enemies System&lt;gray&gt;
+	
+Syntax: &lt;white&gt;info
+        &lt;white&gt;friend &lt;name&gt;
+        &lt;white&gt;enemy &lt;name&gt;
+        &lt;white&gt;neutral &lt;name&gt;
+&lt;gray&gt;The Friends and Enemies System exists to help you keep track of characters you encounter. You can add &lt;steel_blue&gt;friends&lt;gray&gt;, &lt;orange_red&gt;enemies&lt;gray&gt;, or just &lt;pale_goldenrod&gt;neutral&lt;gray&gt; people to the list, and then fill in details about them as you learn more about them in-game.
+This useful feature might help you remember an enemy's cabal, a warrior's specializations or a shapeshifter's forms. On the WHO and WHERE lists, names of friends will be tinted blue, while enemies' will be tinted red.
+
+&lt;orange_red&gt;* &lt;gray&gt;We recommend that you begin by typing the &lt;white&gt;info&lt;gray&gt; command by itself.&lt;orange_red&gt; *
+  
+]]
+  )
+  helpLinks()
+elseif helpselect == '5' then
+  cecho(
+    [[
+&lt;white&gt;Gauges and the 'Setprompt' Command&lt;gray&gt;
+  
+Syntax: &lt;white&gt;setprompt&lt;gray&gt;
+	&lt;white&gt;setprompt &lt;arguments&gt;
+
+&lt;gray&gt;The gauges on the bottom console show your health, mana, movement and experience to next level based on the percentage of each. They gather those numbers from your prompt, from level-up messages, and from the SCORE command, when you use it.
+
+&lt;gray&gt;The&lt;white&gt; setprompt &lt;gray&gt;command fixes your prompt to work with the GUI. Typing setprompt by itself will set the default Carrionfields prompt for you. You can also make your own prompt using the format described in the in-game HELP PROMPT.
+
+]]
+  )
+  helpLinks()
+elseif helpselect == '6' then
+  cecho(
+    [[
+&lt;white&gt;Item Journal&lt;gray&gt;
+  
+&lt;gray&gt;Syntax: &lt;white&gt;journal &lt;gray&gt;to see a list of stored items
+&lt;gray&gt;        &lt;white&gt;journal &lt;item number&gt; &lt;gray&gt;to view a stored item identification
+&lt;gray&gt;        &lt;white&gt;journal remove &lt;item number&gt; &lt;gray&gt;to remove a stored item identification
+&lt;gray&gt;        &lt;white&gt;journal &lt;keyword&gt; &lt;gray&gt;to search for a keyword, which could be any word in the stored item identification. Suggested keywords include item type, material, attack type, or affect type.
+
+The Item Journal is an automatic feature that automatically logs and stores every item that you identify.
+
+Because some methods of identification are imperfect (i.e. the lore skill), you may wish to use &lt;white&gt;journal remove &lt;item number&gt;&lt;gray&gt; on an item before trying a more reliable method to correct any bad data.
+
+]]
+  )
+  helpLinks()
+elseif helpselect == '7' then
+  cecho(
+    [[
+&lt;white&gt;Target Swapping&lt;gray&gt;
+  
+&lt;gray&gt;Syntax:&lt;white&gt; t1 &lt;steel_blue&gt;&lt;name&gt;&lt;gray&gt;
+&lt;white&gt;t2 &lt;steel_blue&gt;&lt;name&gt;&lt;gray&gt; 
+&lt;white&gt;t3 &lt;steel_blue&gt;&lt;name&gt;&lt;gray&gt;
+&lt;white&gt;t4 &lt;steel_blue&gt;&lt;name&gt;&lt;gray&gt;	
+
+&lt;gray&gt;Each of these commands adds an alternate target to buttons at the top of your interface. The &lt;white&gt;t1&lt;gray&gt; command sets a name that will become your &lt;white&gt;Target&lt;gray&gt; when you press the F1 key or click the button. The &lt;white&gt;t2&lt;gray&gt; command corresponds to your F2 key, and so on.
+
+&lt;gray&gt;For example: Edward is your Target, and Jacob is your t1 alternate target. You press F1 or click on Jacob's name. Jacob then becomes your Target.
+	
+The &lt;white&gt;a5, a6, and a7&lt;gray&gt; commands can be used to add alternate actions to the buttons at the top of your interface.
+
+See &lt;white&gt;guihelp 1&lt;gray&gt; for more on The Targeting System.
+	
+]]
+  )
+  helpLinks()
+elseif helpselect == '8' then
+  cecho(
+    [[
+&lt;white&gt;Logging&lt;gray&gt;
+Syntax:&lt;white&gt; autolog
+       &lt;white&gt; log &lt;steel_blue&gt;&lt;filename&gt;
+       &lt;white&gt; searchlog &lt;filename&gt; &lt;word or phrase&gt;
+
+&lt;gray&gt;Examples: &lt;white&gt;log cabalraid&lt;gray&gt;
+&lt;white&gt;searchlog cabalraid is DEAD!!&lt;gray&gt;
+
+The &lt;white&gt;autolog&lt;gray&gt; command toggles automatic logging of each and every session.  Those raw logs go into the log folder and are named using a date and time code.
+
+&lt;gray&gt;You can also use the &lt;white&gt;log&lt;gray&gt; command to start a separate log. If you enter a filename that doesn't exist, it will create it as a text file in the log folder, which can be easily accessed by clicking the 'Logs' button at the top right corner of the screen. Use &lt;white&gt;log off&lt;gray&gt; to stop logging. The &lt;white&gt;searchlog&lt;gray&gt; command will find instances of a word or set of words in a log.
+
+&lt;gray&gt;This quick logging function was contributed by a member of the Mudlet community. If you want to create more robust logs, you may use Mudlet's stock logging or replay features, located in the row of buttons to the right of the input prompt.
+	
+]]
+  )
+  helpLinks(
+    "See the Mudlet forums for more on",
+    "The Simple Logger",
+    "https://forums.mudlet.org/viewtopic.php?t=1424",
+    "Simple Logger Forum Topic"
+  )
+  
+elseif helpselect == '9' then
+  cecho(
+    [[
+&lt;white&gt;Combat Damage Colors&lt;gray&gt;
+&lt;gray&gt;Syntax:&lt;white&gt; damcolor &lt;on/off&gt;
+             &lt;white&gt; damcolor &lt;incoming/outgoing&gt; &lt;color&gt;
+
+&lt;gray&gt;You can change the colors of damage affecting your character and damage that your character is doing to others.  This makes it easier for many players to immediately understand what is going on in the heat of battle.
+
+Use the &lt;white&gt;showcolors&lt;gray&gt; command for a list of valid colors.
+
+    ]]
+    )
+    helpLinks()    
+elseif helpselect == '10' then
+  cecho(
+    [[
+&lt;white&gt;Mapping&lt;gray&gt;
+
+&lt;gray&gt;The Mudlet generic mapper works with Carrion Fields. We've added a few tweaks with this skin that should help your mapping efforts considerably.
+
+You can create your own maps of areas that you can save and use across multiple characters. However, we ask that you respect the rules and not share secrets and especially do not share maps of Explore Areas.  Rule violations can result in character denials or even sitebans.
+
+To get started mapping, use the &lt;white&gt;map basics&lt;gray&gt; command.
+
+&lt;gray&gt;Additionally, you can click the &lt;white&gt;World Map&lt;gray&gt; button to see an artistic rendering of the overworld, and the &lt;white&gt;Wiki Maps&lt;gray&gt; button to travel to an external website with text-based maps that are updated often by players.
+  
+]]
+  )
+  helpLinks(
+    "For detailed help, see",
+    "The Mudlet Mapping Manual",
+    "https://wiki.mudlet.org/w/Manual:Technical_Manual#Mapper",
+    "The Mudlet Mapping Manual"
+  )
+  helpLinks()
+elseif helpselect == '11' then
+  cecho(
+    [[
+&lt;white&gt;Advanced Aliases &amp; Scripting&lt;gray&gt;
+  
+&lt;gray&gt;We offer two ways to make aliases in Mudlet: our simple, command-line system, and the Mudlet way, which involves Lua scripting.  If you decide to go the advanced route, knowing some basic programming helps. For the brave, visit wiki.mudlet.org for a helpful guide on creating aliases from scratch in Mudlet.
+
+&lt;orange_red&gt;* &lt;gray&gt;To get started making simple ones, it's as easy as typing &lt;white&gt;alias&lt;gray&gt;.  This is what we recommend for the vast majority of players. &lt;orange_red&gt;*&lt;gray&gt;
+
+&lt;orange_red&gt;*&lt;gray&gt; Do not put your unique aliases in the CFGUI folder, or they will be lost when you update the Carrion Fields skin. &lt;orange_red&gt;*&lt;gray&gt;
+
+]]
+  )
+  helpLinks()
+
+elseif helpselect == '12' then
+  cecho(
+    [[
+&lt;white&gt;Useful Utility Commands&lt;gray&gt;
+  
+&lt;gray&gt;Here is a list of commands that will help you to get the most out of this skin and client.
+For more details, enter the command by itself.
+
+ GUI COMMANDS:
+ &lt;steel_blue&gt;* &lt;white&gt;buffer&lt;gray&gt;         - Sets the length of your scrollback buffer (default: 50,000 lines)
+ &lt;steel_blue&gt;* &lt;white&gt;fontsize&lt;gray&gt;       - Sets fontsize of your console window. Type &lt;white&gt;fontsize&lt;gray&gt; alone for details.
+ &lt;steel_blue&gt;* &lt;DimGray&gt;guisave&lt;DimGray&gt;        - Save the layout of your windows and tabs (Under Construction)
+ &lt;steel_blue&gt;* &lt;DimGray&gt;guireset&lt;DimGray&gt;       - Reset your windows and tabs to default (Under Construction)
+ &lt;steel_blue&gt;* &lt;DimGray&gt;guirestore&lt;DimGray&gt;     - Restore your gauges, buttons, channels and Navigator windows (Under Construction)&lt;reset&gt;
+ 
+ UTILITY COMMANDS:
+ &lt;steel_blue&gt;* &lt;white&gt;autolog&lt;gray&gt;        - Toggle automatic logging of every session
+ &lt;steel_blue&gt;* &lt;white&gt;showcolors&lt;gray&gt;     - See a list of all colors available for use in highlights and damcolor
+ &lt;steel_blue&gt;* &lt;white&gt;queue&lt;gray&gt;          - Creates a list of commands to send; useful for notes/descs/roles/perform
+ &lt;steel_blue&gt;* &lt;white&gt;delay&lt;gray&gt;          - Used with queue; sets time delay between sent commands
+ &lt;steel_blue&gt;* &lt;white&gt;add&lt;direction&gt;&lt;gray&gt; - After you look all, addeast/addwest etc. to quickly highlight exit descriptions
+ 
+ EXTRAS:
+ &lt;steel_blue&gt;* &lt;white&gt;famwindow&lt;gray&gt;      - For conjurers, switches familiar's views between main and familiar windows
+ &lt;steel_blue&gt;* &lt;white&gt;damcolor&lt;gray&gt;       - Allows you to change the colors of incoming and outgoing damage
+ &lt;steel_blue&gt;* &lt;white&gt;.&lt;gray&gt;              - Speedwalk. Ex: .2n3es would do 2 steps north, 3 east, then once south
+]]
+  )
+  helpLinks()
+  
+  elseif helpselect == '0' then
+  cecho(
+    [[
+&lt;white&gt;Troubleshooting&lt;gray&gt;
+  
+&lt;gray&gt;Many issues with the GUI can be fixed by entering SCORE or AFF in-game. On rare occasions, you may need to use the setprompt command again. If something seems hopelessly broken, try restarting Mudlet. If that fails, try creating a new profile and reloading this package. If you have further questions, comments or suggestions, please email rahsael@carrionfields.com and I'll do my best to help you out. If you're having trouble with an alias or some other type of customization, and copying/modifying an existing one isn't cutting it, check out Mudlet's wiki and forums - they do a great job and the community there is extremely supportive.
+	
+]])
+  else
+    cecho(
+    [[
+&lt;reset&gt;Enter &lt;white&gt;guihelp &lt;number&gt;&lt;reset&gt; to learn about a feature.
+			
+    &lt;dodger_blue&gt;1&lt;reset&gt; - Variables
+    &lt;dodger_blue&gt;2&lt;reset&gt; - Highlights
+    &lt;dodger_blue&gt;3&lt;reset&gt; - Aliases
+
+    &lt;dodger_blue&gt;5&lt;reset&gt; - Gauges and the 'Setprompt' Command
+    &lt;dodger_blue&gt;4&lt;reset&gt; - The Friends and Enemies System
+    &lt;dodger_blue&gt;6&lt;reset&gt; - Item Journal
+    &lt;dodger_blue&gt;7&lt;reset&gt; - Target Swapping
+    
+    &lt;dodger_blue&gt;8&lt;reset&gt; - Customize Your GUI
+    &lt;dodger_blue&gt;9&lt;reset&gt; - Logging
+    &lt;dodger_blue&gt;10&lt;reset&gt; - Combat Damage Colors
+    &lt;dodger_blue&gt;11&lt;reset&gt; - Mapping
+    
+    &lt;dodger_blue&gt;11&lt;reset&gt; - Advanced Aliases &amp; Scripting
+    &lt;dodger_blue&gt;12&lt;reset&gt; - Useful Utility Commands - &lt;OrangeRed&gt;A Must-Read!
+    
+    &lt;dodger_blue&gt;0&lt;reset&gt; - Troubleshooting
+  
+&lt;white&gt;To get started quick:&lt;gray&gt; Type &lt;white&gt;alias&lt;gray&gt; to create aliases, &lt;white&gt;var&lt;gray&gt; to create variables.
+
+]])
+
+  end
+end
+
+function helpLinks(htext, hlinktext, hurl, hcaption)
+  cecho("&lt;steel_blue&gt;Helpful Links:&lt;gray&gt;\n\n")
+  cecho("&lt;gray&gt;Chat our friendly immortals and playerbase for help: ")
+  cechoLink(
+    "&lt;dodger_blue&gt;Carrion Fields Discord&lt;gray&gt;\n\n",
+    [[openURL("https://discord.gg/tK8Q5px"]],
+    "Carrion Fields Discord",
+    true
+  )
+  cecho("&lt;gray&gt;For help with the client, visit ")
+  cechoLink(
+    "&lt;dodger_blue&gt;The Mudlet Manual\n\n",
+    [[openWebPage("https://wiki.mudlet.org/w/Manual:Introduction")]],
+    "The Mudlet Manual",
+    true
+  )
+  if htext ~= nil and hlinktext ~= nil and hurl ~= nil and hcaption ~= nil then
+    cecho("&lt;gray&gt;" .. htext .. " ")
+    cechoLink(
+      "&lt;dodger_blue&gt;" .. hlinktext .. "\n\n",
+      [[openWebPage("https://]] .. hurl .. [[")]],
+      hcaption,
+      true
+    )
+  end
+  cecho("&lt;white&gt;Enter 'guihelp' alone to return to the main help menu.\n\n")
+end
+</script>
+					<eventHandlerList />
+				</Script>
+				<Script isActive="yes" isFolder="no">
+					<name>Gear and Inventory</name>
+					<packageName></packageName>
+					<script>function spairs(t, order)
+  local keys = {}
+  for k in pairs(t) do
+    keys[#keys + 1] = k
+  end
+  -- if order function given, sort by it by passing the table and keys a, b,
+  -- otherwise just sort the keys
+  if order then
+    table.sort(
+      keys,
+      function(a, b)
+        return order(t, a, b)
+      end
+    )
+  else
+    table.sort(keys)
+  end
+  -- return the iterator function
+  local i = 0
+  return
+    function()
+      i = i + 1
+      if keys[i] then
+        return keys[i], t[keys[i]]
+      end
+    end
+end
+
+function colorFlag(flags)
+-- To match flags with colors and return a list of colored flags ready to echo
+  local flag_colors = {}
+  local flag_colors =
+    {
+      glowing = "yellow",
+      consecrated = "white",
+      red = "ansiRed",
+      gold = "yellow",
+      humming = "white",
+      dark = "ansiRed",
+      iron = "ansiRed",
+      mithril = "ansiRed",
+      blazing = "yellow",
+      magical = "white",
+    }
+  local flags_compiled = ""
+  -- Look up the flag color in flag_colors table and add to list
+  for _, flag in ipairs(flags) do
+    local flag_lookup = string.split(string.lower(flag), " ")[1]
+    if flag_colors[flag_lookup] then
+      flags_compiled =
+        flags_compiled .. "&lt;" .. flag_colors[flag_lookup] .. "&gt;(" .. flag .. ")&lt;reset&gt; "
+    else
+      flags_compiled =
+        flags_compiled .. "&lt;white&gt;(" .. flag .. ")&lt;reset&gt; "
+    end
+  end
+  return flags_compiled
+end
+
+function updateGear()
+  equipment_ordered = {}
+  clearWindow("EquipmentConsole")
+  --Equipment
+  EquipmentConsole:cecho("&lt;white&gt;You are using:\n\n")
+  for
+    location, gear in
+      spairs(
+        equipment,
+        function(t, a, b)
+          return t[a]["number"] &lt; t[b]["number"]
+        end
+      )
+  do
+    local equipment_insert = {location, gear["name"]}
+    table.insert(equipment_ordered, equipment_insert)
+    EquipmentConsole:cechoLink(
+      "&lt;steel_blue&gt;" .. location .. ": &lt;gray&gt;" .. gear["name"] .. "\n",
+      [[clickItem("]] .. gear["name"] .. [[")]],
+      "Click to add to Item Journal.",
+      true
+    )
+  end
+end
+
+function updateInventory()
+  clearWindow("InventoryConsole")
+  InventoryConsole:cecho("&lt;white&gt;You are carrying:\n\n")
+  --Inventory
+  for _, data in ipairs(inventory) do
+    local item_count = tonumber(data["count"])
+    local item_flags = data["flags"]
+    local item_name = data["name"]
+    local item_tag = data["tag"] or ""
+    local item_string = "     "
+    if item_count &gt; 1 and item_count &lt; 10 then
+      item_string = "&lt;steel_blue&gt;( " .. item_count .. ")&lt;reset&gt; "
+    elseif item_count &gt; 10 then
+      item_string = "&lt;steel_blue&gt;(" .. item_count .. ")&lt;reset&gt; "
+    end
+    if next(item_flags) ~= nil then
+      item_string = item_string .. colorFlag(item_flags)
+    end
+    
+    
+    item_string = item_string .. item_name .. item_tag .. "&lt;reset&gt;\n"
+    
+    InventoryConsole:cechoLink(
+      item_string,
+      [[clickItem("]] .. item_name .. [[")]],
+      "Click to add to Item Journal.",
+      true
+    )
+  end
+  InventoryConsole:cecho("\n&lt;DimGray&gt;Click an item to add it to your &lt;PaleGoldenrod&gt;Item Journal&lt;DimGray&gt;.\nAdd tags using the &lt;PaleGoldenrod&gt;journal tag&lt;DimGray&gt; command.")
+  return 
+end
+
+function clickItem(name)
+  for index, _ in ipairs(id_table) do
+  -- Because apparently string.match has a problem with '-' characters.
+    if string.match(id_table[index]["name"]:gsub("-", ""), name:gsub("-", "")) then
+      cecho(
+        "&lt;violet&gt;" .. string.title(name) .. " &lt;LightGoldenrod&gt;is already on page &lt;DarkGoldenrod&gt;[&lt;white&gt;" .. index .. "&lt;DarkGoldenrod&gt;]&lt;LightGoldenrod&gt;.\n\n"
+      )
+      return
+    end
+  end
+  id_table[#id_table + 1] = {id = "", keyword = "", name = name}
+  table.save(PkgPath .. "id_table.lua", id_table)
+  cecho(
+    "&lt;LightGoldenrod&gt;You begin a barebones item journal entry for &lt;violet&gt;" ..
+    name ..
+    "&lt;LightGoldenrod&gt;.\n\n"
+  )
+  return
+end</script>
 					<eventHandlerList />
 				</Script>
 			</ScriptGroup>
@@ -12704,6 +13350,32 @@ end
 					</Script>
 				</ScriptGroup>
 			</ScriptGroup>
+			<Script isActive="yes" isFolder="no">
+				<name>refreshTags</name>
+				<packageName></packageName>
+				<script>function refreshTags()
+  echo("Starting Function.")
+  for index, id_data in ipairs(id_table) do
+    if id_data["tag_trigger"] ~= nil and id_data["tag_trigger"] ~= "" then
+      echo("DATA found!")
+      cecho(
+              " &lt;LightGoldenrod&gt;[ &lt;" .. id_data["tag_color"] .. "&gt;" .. id_data["tag"] .. "&lt;LightGoldenrod&gt; ]&lt;reset&gt;"
+            )
+      id_data["tag_trigger"] =
+        tempTrigger(
+          id_data["name"],
+          function()
+            cecho(
+              " &lt;LightGoldenrod&gt;[ &lt;" .. id_data["tag_color"] .. "&gt;" .. id_data["tag"] .. "&lt;LightGoldenrod&gt; ]&lt;reset&gt;"
+            )
+          end
+        )
+      id_table[index]["tag_trigger"] = id_data["tag_trigger"]
+    end
+  end
+end</script>
+				<eventHandlerList />
+			</Script>
 		</ScriptGroup>
 	</ScriptPackage>
 	<KeyPackage>
@@ -12720,7 +13392,7 @@ end
 				<script></script>
 				<command></command>
 				<keyCode>-1</keyCode>
-				<keyModifier>-1</keyModifier>
+				<keyModifier>0</keyModifier>
 				<Key isActive="yes" isFolder="no">
 					<name>kp1 (where)</name>
 					<packageName></packageName>
@@ -12887,14 +13559,14 @@ end
 					<script></script>
 					<command></command>
 					<keyCode>-1</keyCode>
-					<keyModifier>-1</keyModifier>
+					<keyModifier>0</keyModifier>
 					<KeyGroup isActive="no" isFolder="yes">
 						<name>Warrior</name>
 						<packageName></packageName>
 						<script></script>
 						<command></command>
 						<keyCode>-1</keyCode>
-						<keyModifier>-1</keyModifier>
+						<keyModifier>0</keyModifier>
 						<Key isActive="yes" isFolder="no">
 							<name>dash north + action + target</name>
 							<packageName></packageName>
@@ -12950,7 +13622,7 @@ end
 						<script></script>
 						<command></command>
 						<keyCode>-1</keyCode>
-						<keyModifier>-1</keyModifier>
+						<keyModifier>0</keyModifier>
 						<Key isActive="yes" isFolder="no">
 							<name>run n</name>
 							<packageName></packageName>
@@ -13018,7 +13690,7 @@ end
 </script>
 						<command></command>
 						<keyCode>-1</keyCode>
-						<keyModifier>-1</keyModifier>
+						<keyModifier>0</keyModifier>
 						<Key isActive="yes" isFolder="no">
 							<name>fam north</name>
 							<packageName></packageName>
@@ -13130,7 +13802,7 @@ end
 						<script></script>
 						<command></command>
 						<keyCode>-1</keyCode>
-						<keyModifier>-1</keyModifier>
+						<keyModifier>0</keyModifier>
 						<Key isActive="yes" isFolder="no">
 							<name>creep n</name>
 							<packageName></packageName>
@@ -13315,17 +13987,5 @@ end</script>
 	</KeyPackage>
 	<VariablePackage>
 		<HiddenVariables />
-		<Variable>
-			<name>month</name>
-			<keyType>4</keyType>
-			<value>Ascending Sun</value>
-			<valueType>4</valueType>
-		</Variable>
-		<Variable>
-			<name>date</name>
-			<keyType>4</keyType>
-			<value>32</value>
-			<valueType>4</valueType>
-		</Variable>
 	</VariablePackage>
 </MudletPackage>
