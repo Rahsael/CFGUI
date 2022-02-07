@@ -9978,12 +9978,12 @@ elseif helpselect == '6' then
   
 &lt;gray&gt;Syntax: &lt;white&gt;journal &lt;gray&gt;to see a list of stored items
 &lt;gray&gt;        &lt;white&gt;journal &lt;item number&gt; &lt;gray&gt;to view a stored item identification
-&lt;gray&gt;        &lt;white&gt;journal remove &lt;item number&gt; &lt;gray&gt;to remove a stored item identification
+&lt;gray&gt;        &lt;white&gt;journal &lt;item number&gt; remove &lt;gray&gt;to remove a stored item identification
 &lt;gray&gt;        &lt;white&gt;journal &lt;keyword&gt; &lt;gray&gt;to search for a keyword, which could be any word in the stored item identification. Suggested keywords include item type, material, attack type, or affect type.
 
 The Item Journal is an automatic feature that automatically logs and stores every item that you identify.
 
-Because some methods of identification are imperfect (i.e. the lore skill), you may wish to use &lt;white&gt;journal remove &lt;item number&gt;&lt;gray&gt; on an item before trying a more reliable method to correct any bad data.
+Because some methods of identification are imperfect (i.e. the lore skill), you may wish to use &lt;white&gt;journal &lt;item number&gt; remove&lt;gray&gt; on an item before trying a more reliable method to correct any bad data.
 
 ]]
   )
