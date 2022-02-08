@@ -1,0 +1,29 @@
+2/8/2022
+
+<white>Item Journal Overhaul:<reset>
+<OrangeRed>-<reset> After tons of requests, the Item Journal has gained the "tag" feature, allowing you to add tags to items.
+<OrangeRed>-<reset> Item Journal backs up daily, storing up to a month of past versions in a new "backup" folder in your Mudlet profile.
+<OrangeRed>-<reset> Identifying an unidentified item will automatically update the appropriate entry in the Item Journal. The Item Journal displays unidentified items in dark gray, and adds an asterisk next to entries with notes.
+<OrangeRed>-<reset> "Lore" skill users rejoice: If you have already used lore or identify on an item, you can use the "journal replace" command to replace the ID information with your latest (and hopefully most accurate) attempt!
+<OrangeRed>-<reset> You can now set the number of entries that the Item Journal will display with the "journal display <number>" command. It will default to 50.
+
+<white>New Features:<reset>
+<OrangeRed>-<reset> The Event Calendar is now functional again. Additionally, it will only show events that ended within the past six months.
+<OrangeRed>-<reset> Gear Window updates: The Gear Window has been split into the Gear Window and the Inventory Window to allow for better display of objects and tags. Additionally, clicking individual items in the inventory and gear windows will automatically add them to the Item Journal, even if they haven't been identified.
+
+<white>Quality Of Life/Improvements:<reset>
+<OrangeRed>-<reset> The Affect Monitor can now display permanent (-1 hours) affects as "indefinitely"
+<OrangeRed>-<reset> New auto-updater no longer requires Mudlet to restart.
+<OrangeRed>-<reset> The "CF-Loader" package is no longer necessary and will be uninstalled. (The cfLoader script still serves a purpose, so don't delete it!)
+
+<white>Bug Fixes:<reset>
+<OrangeRed>-<reset> Tons of prompt-breaking bugs are fixed, (esp. for goblins and classes who see extra terrain details like rangers, druids and shapeshifters)
+<OrangeRed>-<reset> Tons of item journal bugs are fixed, including the infamous journal-wipe
+<OrangeRed>-<reset> A few other Affects Window and Affect Monitor bugs were squashed
+
+<white>Outstanding Issues:<reset>
+<OrangeRed>-<reset> Still trying to figure out what broke <direction> add.
+
+Report issues on Discord or email rahsael@carrionfields.com
+
+Have coding chops? Email rahsael@carrionfields.com to contribute to this skin.
