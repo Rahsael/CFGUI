@@ -1,12 +1,12 @@
 -- Updated 2/08/2022
 -- Disable/remove obsolete loader script
 if exists("CF_Loader", "script") > 0 then
-  disableScript("CF_Loader")
-  uninstallPackage("CF_Loader")
+  disableScript("CF_loader")
+  uninstallPackage("CF_loader")
 end
 if exists("CF-Loader", "script") > 0 then
-  disableScript("CF-Loader")
-  uninstallPackage("CF-Loader")
+  disableScript("CF-loader")
+  uninstallPackage("CF-loader")
 end
 
 function downloadPkg()
