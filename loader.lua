@@ -1,4 +1,14 @@
 -- Updated 2/08/2022
+-- Disable/remove obsolete loader script
+if exists("CF_Loader", "script") > 0 then
+  disableScript("CF_Loader")
+  uninstallPackage("CF_Loader")
+end
+if exists("CF-Loader", "script") > 0 then
+  disableScript("CF-Loader")
+  uninstallPackage("CF-Loader")
+end
+
 function downloadPkg()
   if exists("CFGUI", "script") > 0 then
     return
