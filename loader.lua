@@ -8,23 +8,19 @@ if exists("CF-Loader", "script") > 0 then
   disableScript("CF-loader")
   uninstallPackage("CF-loader")
 end
+
 -- Downloads CFGUI if it is not installed.
 function downloadPkg()
   if exists("CFGUI", "script") > 0 then
     return
   else
-    downloadFile(getMudletHomeDir() .. "/CFGUI.zip", "https://github.com/carrionfields/CFGUI/releases/latest/download/CFGUI.zip")  
+    installPackage([[https://github.com/carrionfields/CFGUI/releases/latest/download/CFGUI.zip]])  
   end
   return
 end
 registerAnonymousEventHandler("sysLoadEvent", "downloadPkg")
 
--- Now, checking version.txt to make sure it is correct
-
---- CFGUI VERSION
-GUI_version = "1.4.3"
-
--- The 'Initialize' script downloads version.txt from Github. If the download is successful, versionCheck runs.
+-- Checks the version number when version.txt is updated.
 function versionCheck(a, filename)
   --  local filename = getMudletHomeDir().."/version.txt"
   --  local url = "https://github.com/carrionfields/CFGUI/releases/latest/download/version.txt"
@@ -42,22 +38,19 @@ function versionCheck(a, filename)
   if gui_versiontxt == GUI_version then
     return
   else
-    downloadFile(getMudletHomeDir() .. "/CFGUI.zip", "https://github.com/carrionfields/CFGUI/releases/latest/download/CFGUI.zip")  
+    uninstallPackage("CFGUI")
+    cecho("<OrangeRed>A new version of the Carrion Fields client is available. Please restart Mudlet to install before playing.\n\n")
   end
 end
 registerAnonymousEventHandler("sysDownloadDone", "versionCheck")
 
-
--- Installs CFGUI.zip after download
-function installReady(event, file)
-  if file ~= getMudletHomeDir().."/CFGUI.zip" then
-    return
-  else
-    uninstallPackage("CFGUI")
-    installPackage(getMudletHomeDir().."/CFGUI.zip")
+-- Install new version after removing
+function updatePkg(a, package)
+  if package == "CFGUI" then
+    installPackage([[https://github.com/carrionfields/CFGUI/releases/latest/download/CFGUI.zip]])
   end
 end
-registerAnonymousEventHandler("sysDownloadDone", "installReady")
+registerAnonymousEventHandler("sysUninstall", "updatePkg")
 
 -- Installation complete notice
 function installComplete(_, package)
