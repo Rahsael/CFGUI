@@ -40,6 +40,8 @@ function versionCheck(a, filename)
   else
     uninstallPackage("CFGUI")
     cecho("<OrangeRed>A new version of the Carrion Fields client is available. Please restart Mudlet to install before playing.\n\n")
+    echo("Current version: ".. GUI_version .. " | Latest version: " .. gui_versiontxt)
+    installPackage([[https://github.com/carrionfields/CFGUI/releases/latest/download/CFGUI.zip]])
   end
 end
 registerAnonymousEventHandler("sysDownloadDone", "versionCheck")

@@ -1,5 +1,7 @@
-1.4.3
+1.4.3a
 4/3/2024
+
+* Additional prompt number fix. Thanks to bubthegreat for spotting and quickly fixing it!
 
 <white>Prompt Fixes:<reset>
 <OrangeRed>-<reset> Prompts should be fixed for everyone! Shapeshifters, rangers, paladins, goblins, etc. can rejoice. The changes were extensive, so there is always a possibility that a bug will eventually surface.
