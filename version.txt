@@ -1,4 +1,4 @@
-1.4.3a
+1.4.3b
 4/3/2024
 
 * Additional prompt number fix. Thanks to bubthegreat for spotting and quickly fixing it!
